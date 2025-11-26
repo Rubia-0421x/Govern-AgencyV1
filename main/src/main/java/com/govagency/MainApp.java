@@ -2,7 +2,6 @@ package com.govagency;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.json.JSONObject;
 
@@ -16,9 +15,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -37,7 +34,6 @@ public class MainApp extends Application {
     private final Map<String, Citizen> citizenMap = new HashMap<>();
     private LocalDatabase database;
 
-    private static final String CARD_BG = "#ffffff";
     private static final String DARK_BG = "#0d1117";
     private static final String ACCENT_CYAN = "#00ffff";
     private static final String ERROR_RED = "#ff5555";
@@ -80,7 +76,6 @@ public class MainApp extends Application {
         buttonsBox.getChildren().addAll(minimizeBtn, closeBtn);
         topBar.getChildren().add(buttonsBox);
 
-        // Draggable
         topBar.setOnMousePressed(event -> {
             xOffset = event.getSceneX();
             yOffset = event.getSceneY();
@@ -103,35 +98,6 @@ public class MainApp extends Application {
         return btn;
     }
 
-    private boolean showConfirmation(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-
-        alert.getDialogPane().setStyle(
-            "-fx-background-color: " + CARD_BG + ";" +
-            "-fx-padding: 20;" +
-            "-fx-font-size: 14px;" +
-            "-fx-text-fill: black;"
-        );
-
-        alert.getDialogPane().lookup(".button-bar").setStyle(
-            "-fx-background-color: transparent;"
-        );
-
-        alert.getDialogPane().lookupButton(ButtonType.OK).setStyle(
-            "-fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-background-radius: 6;"
-        );
-
-        alert.getDialogPane().lookupButton(ButtonType.CANCEL).setStyle(
-            "-fx-background-color: #2b2b2b; -fx-text-fill: white; -fx-background-radius: 6;"
-        );
-
-        Optional<ButtonType> result = alert.showAndWait();
-        return result.isPresent() && result.get() == ButtonType.OK;
-    }
-
     private void loadCitizens() {
         citizenMap.clear();
         database = new LocalDatabase();
@@ -145,7 +111,7 @@ public class MainApp extends Application {
 
                 Citizen c = new Citizen(id, name, number, email, password);
                 citizenMap.put(id, c);
-            } catch (Exception e) {
+            } catch (org.json.JSONException e) {
                 System.err.println("Error loading citizen: " + e.getMessage());
             }
         }
@@ -163,7 +129,6 @@ public class MainApp extends Application {
             "-fx-border-radius: 20;"
         );
 
-        // Clip for rounded corners
         Rectangle clip = new Rectangle();
         clip.setArcWidth(20);
         clip.setArcHeight(20);
@@ -173,7 +138,6 @@ public class MainApp extends Application {
             clip.setHeight(newVal.getHeight());
         });
 
-        // Add top bar (only on login)
         root.getChildren().add(createTinyTopBar());
 
         VBox.setVgrow(loginView, Priority.ALWAYS);
@@ -189,7 +153,6 @@ public class MainApp extends Application {
         MainController controller = new MainController(isAdmin, citizen, citizenMap, primaryStage, this);
         Parent mainView = (Parent) controller.getView();
 
-        // Just main view, no top bar
         VBox root = new VBox();
         root.setStyle(
             "-fx-background-color: " + DARK_BG + ";" +
@@ -197,7 +160,6 @@ public class MainApp extends Application {
             "-fx-border-radius: 20;"
         );
 
-        // Clip for rounded corners
         Rectangle clip = new Rectangle();
         clip.setArcWidth(20);
         clip.setArcHeight(20);

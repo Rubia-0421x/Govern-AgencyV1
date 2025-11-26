@@ -23,6 +23,7 @@ import com.govagency.util.Validator;
 
 import javafx.animation.PauseTransition;
 import javafx.animation.ScaleTransition;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -373,6 +374,12 @@ public class MainController {
             }
         }
 
+        CustomDialog dialog = new CustomDialog();
+        dialog.showAndWait("Update Profile", "Update your profile with the new information?", "/com/govagency/govicon1.png");
+        if (!dialog.isConfirmed()) {
+            return;
+        }
+
         loggedInCitizen.setEmail(email);
         loggedInCitizen.setNumber(phone);
         database.updateCitizen(loggedInCitizen.getId(), loggedInCitizen);
@@ -431,6 +438,16 @@ public class MainController {
 
         if (!n.equals(r)) {
             showError.accept("New passwords do not match.");
+            return;
+        }
+
+        CustomDialog dialog = new CustomDialog();
+        dialog.showAndWait(
+            "Change Password",
+            "Change your password?\n\nYou will need to log in again with your new password.",
+            "/com/govagency/govicon1.png"
+        );
+        if (!dialog.isConfirmed()) {
             return;
         }
 
@@ -687,18 +704,13 @@ public class MainController {
         VBox deleteSection = new VBox(12);
         deleteSection.setPadding(new Insets(15));
         deleteSection.setStyle(createCardStyle());
-        
         Label deleteTitle = createSectionTitle("🗑️ Delete Citizen");
-        
         TextField deleteCitizenIdField = createTextField("Enter Citizen ID to delete...");
-        
         Button deleteCitizenBtn = createButton("🗑️ Delete Citizen", ERROR_RED);
         deleteCitizenBtn.setOnAction(e -> showDeleteCitizenDialog(deleteCitizenIdField.getText().trim()));
-        
         HBox deleteBox = new HBox(10, deleteCitizenIdField, deleteCitizenBtn);
         deleteBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(deleteCitizenIdField, Priority.ALWAYS);
-        
         deleteSection.getChildren().addAll(deleteTitle, deleteBox);
 
         adminCitizensStatusArea = createTextArea();
@@ -717,31 +729,34 @@ public class MainController {
 
         ScrollPane scroll = new ScrollPane(content);
         scroll.setFitToWidth(true);
-        
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
         scroll.setStyle(
             "-fx-background: " + DARK_BG + ";" +
             "-fx-background-color: " + DARK_BG + ";"
         );
-        
-        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-        
+
         scroll.skinProperty().addListener((obs, oldSkin, newSkin) -> {
             if (newSkin != null) {
                 javafx.application.Platform.runLater(() -> styleScrollBarNodes(scroll));
             }
         });
-        
+
         ((VBox) scroll.getContent()).setBackground(
             new Background(new BackgroundFill(Color.web(DARK_BG), CornerRadii.EMPTY, Insets.EMPTY))
         );
 
+        // AUTO SCROLL WHEN TEXT AREA UPDATES
+        adminCitizensStatusArea.textProperty().addListener((obs, oldText, newText) -> {
+            Platform.runLater(() -> scroll.setVvalue(1.0)); // scrolls to bottom
+        });
+
         return scroll;
     }
 
+
     private void styleScrollBarNodes(ScrollPane scrollPane) {
         for (Node node : scrollPane.lookupAll(".scroll-bar")) {
-            if (node instanceof javafx.scene.control.ScrollBar) {
-                javafx.scene.control.ScrollBar scrollBar = (javafx.scene.control.ScrollBar) node;
+            if (node instanceof javafx.scene.control.ScrollBar scrollBar) {
                 
                 scrollBar.setStyle(
                     "-fx-background-color: " + CARD_BG + ";" +
@@ -831,8 +846,9 @@ public class MainController {
         VBox content = new VBox(15);
         content.setPadding(new Insets(15));
 
-        Label citizenInfo = new Label("Citizen to Delete:\n" +
-            "ID: " + targetCitizen.getId() + "\n" +
+        Label citizenInfo = new Label("""
+                                      Citizen to Delete:
+                                      ID: """ + targetCitizen.getId() + "\n" +
             "Name: " + targetCitizen.getName() + "\n" +
             "Email: " + targetCitizen.getEmail());
         citizenInfo.setWrapText(true);
@@ -1027,7 +1043,7 @@ public class MainController {
                         arch.getString("archivedAt"),
                         arch.getString("reason")
                     ));
-                } catch (Exception e) {
+                } catch (JSONException e) {
                     System.err.println("Error displaying archive: " + e.getMessage());
                 }
             }
@@ -1044,7 +1060,7 @@ public class MainController {
 
         StringBuilder sb = new StringBuilder();
         sb.append("╔════════════════════════════════════════════════════════════╗\n");
-        sb.append("║  " + String.format("%-56s", type. replace("_", " ")) + "  ║\n");
+        sb.append("║  ").append(String.format("%-56s", type. replace("_", " "))).append("  ║\n");
         sb.append("╚════════════════════════════════════════════════════════════╝\n\n");
 
         if (archives.isEmpty()) {
@@ -1065,7 +1081,7 @@ public class MainController {
                         arch. getString("archivedAt"),
                         arch.getString("reason")
                     ));
-                } catch (Exception e) {
+                } catch (JSONException e) {
                     System.err.println("Error displaying archive: " + e.getMessage());
                 }
             }
@@ -1092,7 +1108,7 @@ public class MainController {
                     deletedCitizenArchive = arch;
                     break;
                 }
-            } catch (Exception e) {
+            } catch (JSONException e) {
                 System.err.println("Error searching archive: " + e.getMessage());
             }
         }
@@ -1122,7 +1138,7 @@ public class MainController {
             info.setWrapText(true);
             
             content.getChildren().add(info);
-        } catch (Exception e) {
+        } catch (JSONException e) {
             showError("❌ Error reading citizen data: " + e.getMessage(), archiveStatusArea);
             return;
         }
@@ -1164,7 +1180,7 @@ public class MainController {
                 
                 adminShowAllCitizens();
 
-            } catch (Exception e) {
+            } catch (JSONException e) {
                 showError("❌ Error restoring citizen: " + e.getMessage(), archiveStatusArea);
                 System.err.println("Error restoring citizen: " + e.getMessage());
             }
@@ -1172,134 +1188,149 @@ public class MainController {
     }
 
     private VBox createAddCitizenPane() {
-        VBox addSection = new VBox(12);
-        addSection.setPadding(new Insets(15));
-        addSection.setStyle(createCardStyle());
-        Label addTitle = createSectionTitle("➕ Add New Citizen");
+    VBox addSection = new VBox(12);
+    addSection.setPadding(new Insets(15));
+    addSection.setStyle(createCardStyle());
+    addSection.setFillWidth(true);
 
-        Label statusLabel = new Label();
-        statusLabel.setStyle("-fx-font-size: 12;");
+    Label addTitle = createSectionTitle("➕ Add New Citizen");
 
-        Label idLabel = createLabel("Citizen ID (Auto-Generated):");
-        TextField idField = createTextField("");
-        idField.setEditable(false);
-        idField.setStyle(
-            "-fx-font-size: 12;" +
-            "-fx-padding: 8;" +
-            "-fx-background-color: #0a0e13;" +
-            "-fx-text-fill: " + ACCENT_CYAN + ";" +
-            "-fx-border-color: " + ACCENT_CYAN + ";" +
-            "-fx-border-radius: 4;" +
-            "-fx-border-width: 1;" +
-            "-fx-font-family: 'Courier New';" +
-            "-fx-opacity: 0.8;"
-        );
+    // STATUS LABEL
+    Label statusLabel = new Label();
+    statusLabel.setWrapText(true);
+    statusLabel.setMaxWidth(Double.MAX_VALUE);
+    statusLabel.setVisible(false);
+    statusLabel.setStyle("-fx-font-size: 12; -fx-padding: 5; -fx-background-radius: 4;");
+    VBox.setVgrow(statusLabel, Priority.NEVER);
 
-        if (idField.getText().isEmpty()) {
-            idField.setText(CitizenIdGenerator.generateCitizenId(citizenMap));
+    PauseTransition hideStatus = new PauseTransition(Duration.seconds(3));
+    hideStatus.setOnFinished(evt -> statusLabel.setVisible(false));
+
+    Consumer<String> showError = msg -> {
+        statusLabel.setText("⚠️ " + msg);
+        statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-background-color: #2a0000; -fx-padding: 5; -fx-background-radius: 4;");
+        statusLabel.setVisible(true);
+        hideStatus.playFromStart();
+    };
+
+    Consumer<String> showSuccess = msg -> {
+        statusLabel.setText("✅ " + msg);
+        statusLabel.setStyle("-fx-text-fill: #4CAF50; -fx-background-color: #002a1a; -fx-padding: 5; -fx-background-radius: 4;");
+        statusLabel.setVisible(true);
+        hideStatus.playFromStart();
+    };
+
+    Label idLabel = createLabel("Citizen ID (Auto-Generated):");
+    TextField idField = createTextField("");
+    idField.setEditable(false);
+    idField.setStyle(
+        "-fx-font-size: 12;" +
+        "-fx-padding: 8;" +
+        "-fx-background-color: #0a0e13;" +
+        "-fx-text-fill: " + ACCENT_CYAN + ";" +
+        "-fx-border-color: " + ACCENT_CYAN + ";" +
+        "-fx-border-radius: 4;" +
+        "-fx-border-width: 1;" +
+        "-fx-font-family: 'Courier New';" +
+        "-fx-opacity: 0.8;"
+    );
+
+    if (idField.getText().isEmpty()) {
+        idField.setText(CitizenIdGenerator.generateCitizenId(citizenMap));
+    }
+
+    Button regenerateBtn = createButton("🔄 New ID", PRIMARY_BLUE);
+    regenerateBtn.setPrefWidth(120);
+    regenerateBtn.setOnAction(e -> idField.setText(CitizenIdGenerator.generateCitizenId(citizenMap)));
+
+    HBox idBox = new HBox(10, idField, regenerateBtn);
+    HBox.setHgrow(idField, Priority.ALWAYS);
+
+    TextField nameField = createTextField("Name...");
+    TextField emailField = createTextField("Email...");
+    TextField numberField = createTextField("Phone Number...");
+    TextField passwordField = createTextField("Password...");
+
+    VBox.setVgrow(nameField, Priority.NEVER);
+    VBox.setVgrow(emailField, Priority.NEVER);
+    VBox.setVgrow(numberField, Priority.NEVER);
+    VBox.setVgrow(passwordField, Priority.NEVER);
+
+    Button addBtn = createButton("✅ Add Citizen", ACCENT_CYAN);
+    addBtn.setOnAction(e -> {
+        String id = idField.getText().trim();
+        String name = nameField.getText().trim();
+        String email = emailField.getText().trim();
+        String number = numberField.getText().trim();
+        String password = passwordField.getText().trim();
+
+        // EMPTY CHECK
+        if (name.isEmpty() || email.isEmpty() || number.isEmpty() || password.isEmpty()) {
+            showError.accept("Please fill in all fields.");
+            return;
         }
 
-        Button regenerateBtn = createButton("🔄 New ID", PRIMARY_BLUE);
-        regenerateBtn.setPrefWidth(120);
-        regenerateBtn.setOnAction(e -> {
-            idField.setText(CitizenIdGenerator.generateCitizenId(citizenMap));
-        });
+        // VALIDATION
+        if (!Validator.isValidCitizenName(name)) {
+            showError.accept("Invalid name format.");
+            return;
+        }
+        if (!Validator.isValidEmail(email)) {
+            showError.accept("Invalid email format.");
+            return;
+        }
+        if (!Validator.isValidCitizenNumber(number)) {
+            showError.accept("Invalid phone number format.");
+            return;
+        }
 
-        HBox idBox = new HBox(10, idField, regenerateBtn);
-        HBox.setHgrow(idField, Priority.ALWAYS);
-
-        TextField nameField = createTextField("Name...");
-        TextField emailField = createTextField("Email...");
-        TextField numberField = createTextField("Phone Number...");
-        TextField passwordField = createTextField("Password...");
-
-        Button addBtn = createButton("✅ Add Citizen", ACCENT_CYAN);
-        addBtn.setOnAction(e -> {
-            String id = idField.getText().trim();
-            String name = nameField.getText().trim();
-            String email = emailField.getText().trim();
-            String number = numberField.getText().trim();
-            String password = passwordField.getText().trim();
-
-            statusLabel.setText("");
-
-            // empty check
-            if (name.isEmpty() || email.isEmpty() || number.isEmpty() || password.isEmpty()) {
-                statusLabel.setText("Please fill in all fields.");
-                statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12;");
+        // CHECK DUPLICATES
+        for (Citizen c : citizenMap.values()) {
+            if (c.getEmail().equalsIgnoreCase(email)) {
+                showError.accept("Email already in use.");
                 return;
             }
-
-            // validation
-            if (!Validator.isValidCitizenName(name)) {
-                statusLabel.setText("Invalid name format.");
-                statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12;");
+            if (c.getNumber().equals(number)) {
+                showError.accept("Phone number already in use.");
                 return;
             }
-            if (!Validator.isValidEmail(email)) {
-                statusLabel.setText("Invalid email format.");
-                statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12;");
-                return;
-            }
-            if (!Validator.isValidCitizenNumber(number)) {
-                statusLabel.setText("Invalid phone number format.");
-                statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12;");
-                return;
-            }
+        }
 
-            if (citizenMap.containsKey(id)) {
-                statusLabel.setText("Citizen ID already exists.");
-                statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12;");
-                return;
-            }
+        // ADD CITIZEN
+        Citizen newCitizen = new Citizen(id, name, number, email, password);
+        LocalDatabase db = new LocalDatabase();
+        db.addCitizen(newCitizen);
+        citizenMap.put(id, newCitizen);
 
-            for (Citizen c : citizenMap.values()) {
-                if (c.getEmail().equalsIgnoreCase(email)) {
-                    statusLabel.setText("Email already in use.");
-                    statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12;");
-                    return;
-                }
-            }
+        showSuccess.accept("Citizen added successfully: " + name);
+        adminCitizensStatusArea.appendText("✅ Added citizen: " + newCitizen.getName() + " (ID: " + id + ")\n");
 
-            Citizen newCitizen = new Citizen(id, name, number, email, password);
-            LocalDatabase db = new LocalDatabase();
-            db.addCitizen(newCitizen);
-            citizenMap.put(id, newCitizen);
+        idField.setText(CitizenIdGenerator.generateCitizenId(citizenMap));
+        nameField.clear();
+        emailField.clear();
+        numberField.clear();
+        passwordField.clear();
+    });
 
-            // success (GREEN)
-            statusLabel.setText("Citizen added successfully: " + name);
-            statusLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-size: 12;");
+    addSection.getChildren().addAll(
+        addTitle,
+        statusLabel,
+        idLabel,
+        idBox,
+        createLabel("Name:"),
+        nameField,
+        createLabel("Email:"),
+        emailField,
+        createLabel("Phone Number:"),
+        numberField,
+        createLabel("Password:"),
+        passwordField,
+        addBtn
+    );
 
-            // log success
-            adminCitizensStatusArea.appendText(
-                "✅ Added citizen: " + newCitizen.getName() + " (ID: " + id + ")\n"
-            );
+    return addSection;
+}
 
-            idField.setText(CitizenIdGenerator.generateCitizenId(citizenMap));
-            nameField.clear();
-            emailField.clear();
-            numberField.clear();
-            passwordField.clear();
-        });
-
-        addSection.getChildren().addAll(
-            addTitle,
-            statusLabel,
-            idLabel,
-            idBox,
-            createLabel("Name:"),
-            nameField,
-            createLabel("Email:"),
-            emailField,
-            createLabel("Phone Number:"),
-            numberField,
-            createLabel("Password:"),
-            passwordField,
-            addBtn
-        );
-
-        return addSection;
-    }
 
 
 
@@ -1514,88 +1545,6 @@ public class MainController {
         return scroll;
     }
 
-
-    private void updateProfile(String email, String phone) {
-        if (email.isEmpty() || phone.isEmpty()) {
-            showError("❌ Email and phone cannot be empty.", null);
-            return;
-        }
-
-        if (! Validator.isValidEmail(email)) {
-            showError("❌ Invalid email format.", null);
-            return;
-        }
-
-        if (!isValidPhilippinePhoneNumber(phone)) {
-            showError("❌ Invalid phone number.", null);
-            return;
-        }
-
-        for (Citizen c : citizenMap.values()) {
-            if (! c.getId().equals(loggedInCitizen.getId()) && c.getEmail().equalsIgnoreCase(email)) {
-                showError("❌ Email already in use.", null);
-                return;
-            }
-        }
-
-        CustomDialog dialog = new CustomDialog();
-        dialog.showAndWait("Update Profile", "Update your profile with the new information?", "/com/govagency/govicon1.png");
-        if (!dialog.isConfirmed()) {
-            return;
-        }
-
-
-        loggedInCitizen.setEmail(email);
-        loggedInCitizen. setNumber(phone);
-        database.updateCitizen(loggedInCitizen.getId(), loggedInCitizen);
-
-        showSuccess("✅ Profile updated successfully!", null);
-    }
-
-
-    private void changePassword(String currentPassword, String newPassword, String confirmPassword) {
-        if (currentPassword.isEmpty() || newPassword. isEmpty() || confirmPassword.isEmpty()) {
-            showError("❌ All password fields are required.", null);
-            return;
-        }
-
-        if (!loggedInCitizen.getPassword().equals(currentPassword)) {
-            showError("❌ Current password is incorrect.", null);
-            return;
-        }
-
-        if (newPassword.length() < 6) {
-            showError("❌ New password must be at least 6 characters long.", null);
-            return;
-        }
-
-        if (!newPassword.equals(confirmPassword)) {
-            showError("❌ New passwords do not match.", null);
-            return;
-        }
-
-        if (newPassword.equals(currentPassword)) {
-            showError("❌ New password must be different from current password.", null);
-            return;
-        }
-
-        CustomDialog dialog = new CustomDialog();
-        dialog.showAndWait(
-            "Change Password",
-            "Change your password?\n\nYou will need to log in again with your new password.",
-            "/com/govagency/govicon1.png"
-        );
-        if (!dialog.isConfirmed()) {
-            return;
-        }
-
-
-        loggedInCitizen.setPassword(newPassword);
-        database.updateCitizen(loggedInCitizen. getId(), loggedInCitizen);
-
-        showSuccess("✅ Password changed successfully!\nPlease log in again.", null);
-    }
-
     private void submitRequest(String type, String description) {
         if (type == null || type.isEmpty()) {
             showError("❌ Please select a request type.", citizenRequestsStatusArea);
@@ -1806,41 +1755,44 @@ public class MainController {
     }
 
     private void adminShowAllCitizens() {
-    if (citizenMap.isEmpty()) {
-        adminCitizensStatusArea.setText("❌ No citizens in the system.");
-        return;
+        if (citizenMap.isEmpty()) {
+            adminCitizensStatusArea.setText("❌ No citizens in the system.");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("╔════════════════════════════════════════════════════════════╗\n");
+        sb.append("║                    ALL CITIZENS                             ║\n");
+        sb.append("╚════════════════════════════════════════════════════════════╝\n\n");
+
+        int count = 1;
+        for (Citizen c : citizenMap.values()) {
+            sb.append(String.format(
+                "%d. ID: %s\n" +
+                "   Name: %s\n" +
+                "   Email: %s\n" +
+                "   Phone: %s\n\n",
+                count,
+                c.getId(),
+                c.getName(),
+                c.getEmail(),
+                c.getNumber()
+            ));
+            count++;
+        }
+
+        sb.append("────────────────────────────────────────────────────────────\n");
+        sb.append("TO DELETE A CITIZEN:\n");
+        sb.append("1. Copy the Citizen ID\n");
+        sb.append("2. Use the 'Delete Citizen' button below\n");
+        sb.append("3. Enter the ID and confirm with admin password\n");
+
+        adminCitizensStatusArea.setText(sb.toString());
+
+        // Auto-scroll to bottom
+        Platform.runLater(() -> adminCitizensStatusArea.setScrollTop(Double.MAX_VALUE));
     }
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("╔════════════════════════════════════════════════════════════╗\n");
-    sb. append("║                    ALL CITIZENS                             ║\n");
-    sb.append("╚════════════════════════════════════════════════════════════╝\n\n");
-
-    int count = 1;
-    for (Citizen c : citizenMap.values()) {
-        sb.append(String. format(
-            "%d. ID: %s\n" +
-            "   Name: %s\n" +
-            "   Email: %s\n" +
-            "   Phone: %s\n\n",
-            count,
-            c.getId(),
-            c. getName(),
-            c.getEmail(),
-            c.getNumber()
-        ));
-        count++;
-    }
-
-    sb.append("────────────────────────────────────────────────────────────\n");
-    sb.append("TO DELETE A CITIZEN:\n");
-    sb.append("1. Copy the Citizen ID\n");
-    sb.append("2. Use the 'Delete Citizen' button below\n");
-    sb.append("3. Enter the ID and confirm with admin password\n");
-
-    adminCitizensStatusArea.setText(sb.toString());
-
-}
 
     private void adminSearchRequests(String citizenId) {
         if (citizenId.isEmpty()) {
@@ -1875,7 +1827,7 @@ public class MainController {
     private void displayRequestsAdmin(List<ServiceRequest> reqs, String title) {
         StringBuilder sb = new StringBuilder();
         sb.append("╔════════════════════════════════════════════════════════════╗\n");
-        sb.append("║  " + String.format("%-56s", title) + "  ║\n");
+        sb.append("║  ").append(String.format("%-56s", title)).append("  ║\n");
         sb.append("╚════════════════════════════════════════════════════════════╝\n\n");
 
         for (ServiceRequest sr : reqs) {
@@ -1986,6 +1938,7 @@ public class MainController {
         displayDocumentsAdmin(documents, "All Documents");
     }
 
+    @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
     private void displayDocumentsAdmin(List<Document> docs, String title) {
         StringBuilder sb = new StringBuilder();
         sb.append("╔════════════════════════════════════════════════════════════╗\n");
@@ -1994,12 +1947,14 @@ public class MainController {
 
         for (Document doc : docs) {
             sb.append(String.format(
-                "Document ID: %s\n" +
-                "Request ID: %s\n" +
-                "Citizen ID: %s\n" +
-                "File: %s\n" +
-                "Status: %s %s\n" +
-                "Uploaded: %s\n" +
+                """
+                Document ID: %s
+                Request ID: %s
+                Citizen ID: %s
+                File: %s
+                Status: %s %s
+                Uploaded: %s
+                """ +
                 (doc.getReviewComment().isEmpty() ? "" : "Review: %s\n") +
                 "────────────────────────────────────────────────────────────\n\n",
                 doc.getId(),
@@ -2081,12 +2036,6 @@ public class MainController {
             case "REQUESTED" -> "📩";
             default -> "❓";
         };
-    }
-
-    private boolean isValidPhilippinePhoneNumber(String phone) {
-        if (phone == null || phone.isEmpty()) return false;
-        String normalized = phone.trim();
-        return normalized.matches("^(09|\\+639|\\+6309)\\d{9}$");
     }
 
     private Tab createTab(String title, Node content) {
@@ -2178,8 +2127,7 @@ public class MainController {
                     int tabIndex = 0;
                     
                     for (Node tabNode : tabPane.lookupAll(".tab")) {
-                        if (tabNode instanceof Region) {
-                            Region tabRegion = (Region) tabNode;
+                        if (tabNode instanceof Region tabRegion) {
                             
                             if (tabIndex == selectedIndex) {
                                 tabRegion.setStyle(
@@ -2209,8 +2157,7 @@ public class MainController {
 
                 int tabIndex = 0;
                 for (Node tabNode : tabPane.lookupAll(".tab")) {
-                    if (tabNode instanceof Region) {
-                        Region tabRegion = (Region) tabNode;
+                    if (tabNode instanceof Region tabRegion) {
                         final int currentTabIndex = tabIndex;
 
                         tabRegion.setOnMouseEntered(e -> {
@@ -2244,7 +2191,6 @@ public class MainController {
 
             } catch (Exception e) {
                 System.err.println("Error styling tabs: " + e. getMessage());
-                e.printStackTrace();
             }
         });
     }
@@ -2474,7 +2420,7 @@ public class MainController {
             b = Math.min(b + 40, 255);
 
             return String.format("#%02x%02x%02x", r, g, b);
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             return hexColor;
         }
     }
@@ -2486,37 +2432,36 @@ public class MainController {
                "-fx-border-width: 1;";
     }
 
-    private void showSuccess(String message, TextArea statusArea) {
-        if (statusArea != null) {
-            statusArea.setStyle(
-                "-fx-font-size: 11;" +
-                "-fx-font-family: 'Courier New';" +
-                "-fx-padding: 10;" +
-                "-fx-border-color: " + SUCCESS_GREEN + ";" +
-                "-fx-border-radius: 4;" +
-                "-fx-border-width: 2;" +
-                "-fx-background-color: " + INPUT_BG + ";" +
-                "-fx-text-fill: " + SUCCESS_GREEN + ";" +
-                "-fx-control-inner-background: " + INPUT_BG + ";"
-            );
-            statusArea.setText(message);
-        }
+    private void showTemporaryMessage(String message, TextArea statusArea, String color) {
+        if (statusArea == null) return;
+
+        String originalStyle = statusArea.getStyle(); // save current style
+
+        statusArea.setStyle(
+            "-fx-font-size: 11;" +
+            "-fx-font-family: 'Courier New';" +
+            "-fx-padding: 10;" +
+            "-fx-border-color: " + color + ";" +
+            "-fx-border-radius: 4;" +
+            "-fx-border-width: 2;" +
+            "-fx-background-color: " + INPUT_BG + ";" +
+            "-fx-text-fill: " + color + ";" +
+            "-fx-control-inner-background: " + INPUT_BG + ";"
+        );
+        statusArea.setText(message);
+
+        // revert after 3 seconds
+        PauseTransition pause = new PauseTransition(Duration.seconds(3));
+        pause.setOnFinished(e -> statusArea.setStyle(originalStyle));
+        pause.play();
     }
 
     private void showError(String message, TextArea statusArea) {
-        if (statusArea != null) {
-            statusArea.setStyle(
-                "-fx-font-size: 11;" +
-                "-fx-font-family: 'Courier New';" +
-                "-fx-padding: 10;" +
-                "-fx-border-color: " + ERROR_RED + ";" +
-                "-fx-border-radius: 4;" +
-                "-fx-border-width: 2;" +
-                "-fx-background-color: " + INPUT_BG + ";" +
-                "-fx-text-fill: " + ERROR_RED + ";" +
-                "-fx-control-inner-background: " + INPUT_BG + ";"
-            );
-            statusArea.setText(message);
-        }
+        showTemporaryMessage(message, statusArea, ERROR_RED);
     }
+
+    private void showSuccess(String message, TextArea statusArea) {
+        showTemporaryMessage(message, statusArea, SUCCESS_GREEN);
+    }
+
 }
