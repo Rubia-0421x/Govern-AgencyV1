@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -20,6 +21,7 @@ import com.govagency.util.CitizenIdGenerator;
 import com.govagency.util.CustomDialog;
 import com.govagency.util.Validator;
 
+import javafx.animation.PauseTransition;
 import javafx.animation.ScaleTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -224,7 +226,6 @@ public class MainController {
             }
         });
 
-
         HBox windowButtons = new HBox(5, minimizeBtn, closeBtn);
         windowButtons.setAlignment(Pos.CENTER_RIGHT);
 
@@ -276,102 +277,195 @@ public class MainController {
     }
 
     private Node createCitizenProfilePane() {
-        VBox content = new VBox(20);
-        content.setPadding(new Insets(20));
-        content.setBackground(new Background(new BackgroundFill(Color.web(DARK_BG), CornerRadii.EMPTY, Insets.EMPTY)));
 
-        VBox infoSection = new VBox(10);
-        infoSection.setPadding(new Insets(15));
-        infoSection.setStyle(createCardStyle());
+    VBox content = new VBox(20);
+    content.setPadding(new Insets(20));
+    content.setBackground(new Background(new BackgroundFill(Color.web(DARK_BG), CornerRadii.EMPTY, Insets.EMPTY)));
 
-        Label infoTitle = createSectionTitle("📋 Personal Information");
-        Label idLabel = createInfoLabel("Citizen ID: " + loggedInCitizen.getId());
-        Label nameLabel = createInfoLabel("Name: " + loggedInCitizen.getName());
-        Label emailLabel = createInfoLabel("Email: " + loggedInCitizen.getEmail());
-        Label phoneLabel = createInfoLabel("Phone: " + loggedInCitizen.getNumber());
+    // STATUS LABEL
+    Label statusLabel = new Label();
+    statusLabel.setStyle("-fx-font-size: 12; -fx-padding: 5; -fx-background-radius: 4;");
+    statusLabel.setVisible(false);
 
-        infoSection.getChildren().addAll(infoTitle, idLabel, nameLabel, emailLabel, phoneLabel);
+    PauseTransition hideStatus = new PauseTransition(Duration.seconds(3));
+    hideStatus.setOnFinished(evt -> statusLabel.setVisible(false));
 
-        VBox editSection = new VBox(12);
-        editSection.setPadding(new Insets(15));
-        editSection.setStyle(createCardStyle());
+    Consumer<String> showError = msg -> {
+        statusLabel.setText("⚠️ " + msg);
+        statusLabel.setStyle("-fx-text-fill: #ff6b6b; -fx-background-color: #2a0000; -fx-padding: 5; -fx-background-radius: 4;");
+        statusLabel.setVisible(true);
+        hideStatus.playFromStart();
+    };
 
-        Label editTitle = createSectionTitle("✏️ Update Contact Information");
+    Consumer<String> showSuccess = msg -> {
+        statusLabel.setText("✅ " + msg);
+        statusLabel.setStyle("-fx-text-fill: #4cffb0; -fx-background-color: #002a1a; -fx-padding: 5; -fx-background-radius: 4;");
+        statusLabel.setVisible(true);
+        hideStatus.playFromStart();
+    };
 
-        GridPane grid = new GridPane();
-        grid.setHgap(15);
-        grid.setVgap(12);
+    // ============================
+    // INFO SECTION
+    // ============================
+    VBox infoSection = new VBox(10);
+    infoSection.setPadding(new Insets(15));
+    infoSection.setStyle(createCardStyle());
 
-        TextField emailField = createTextField("Enter new email");
-        TextField phoneField = createTextField("Enter new phone");
+    Label infoTitle = createSectionTitle("📋 Personal Information");
+    Label idLabel = createInfoLabel("Citizen ID: " + loggedInCitizen.getId());
+    Label nameLabel = createInfoLabel("Name: " + loggedInCitizen.getName());
+    Label emailLabel = createInfoLabel("Email: " + loggedInCitizen.getEmail());
+    Label phoneLabel = createInfoLabel("Phone: " + loggedInCitizen.getNumber());
 
-        grid.add(createLabel("Email:"), 0, 0);
-        grid.add(emailField, 1, 0);
-        grid.add(createLabel("Phone:"), 0, 1);
-        grid.add(phoneField, 1, 1);
+    infoSection.getChildren().addAll(infoTitle, idLabel, nameLabel, emailLabel, phoneLabel);
 
-        ColumnConstraints col1 = new ColumnConstraints(80);
-        ColumnConstraints col2 = new ColumnConstraints();
-        col2.setHgrow(Priority.ALWAYS);
-        grid.getColumnConstraints().addAll(col1, col2);
+    // ============================
+    // UPDATE CONTACT INFO
+    // ============================
+    VBox editSection = new VBox(12);
+    editSection.setPadding(new Insets(15));
+    editSection.setStyle(createCardStyle());
 
-        Button updateBtn = createButton("💾 Update", SUCCESS_GREEN);
-        updateBtn.setOnAction(e -> updateProfile(emailField.getText().trim(), phoneField.getText().trim()));
+    Label editTitle = createSectionTitle("✏️ Update Contact Information");
 
-        HBox btnBox = new HBox(10, updateBtn);
-        btnBox.setAlignment(Pos.CENTER_RIGHT);
+    GridPane grid = new GridPane();
+    grid.setHgap(15);
+    grid.setVgap(12);
 
-        editSection.getChildren().addAll(editTitle, grid, btnBox);
+    TextField emailField = createTextField(loggedInCitizen.getEmail());
+    TextField phoneField = createTextField(loggedInCitizen.getNumber());
 
-        VBox passwordSection = new VBox(12);
-        passwordSection.setPadding(new Insets(15));
-        passwordSection.setStyle(createCardStyle());
+    grid.add(createLabel("Email:"), 0, 0);
+    grid.add(emailField, 1, 0);
+    grid.add(createLabel("Phone:"), 0, 1);
+    grid.add(phoneField, 1, 1);
 
-        Label pwdTitle = createSectionTitle("🔐 Change Password");
+    ColumnConstraints col1 = new ColumnConstraints(80);
+    ColumnConstraints col2 = new ColumnConstraints();
+    col2.setHgrow(Priority.ALWAYS);
+    grid.getColumnConstraints().addAll(col1, col2);
 
-        GridPane pwdGrid = new GridPane();
-        pwdGrid.setHgap(15);
-        pwdGrid.setVgap(12);
+    Button updateBtn = createButton("💾 Update", SUCCESS_GREEN);
+    updateBtn.setOnAction(e -> {
+        String email = emailField.getText().trim();
+        String phone = phoneField.getText().trim();
 
-        PasswordField currentPwdField = createPasswordField("Current password");
-        PasswordField newPwdField = createPasswordField("New password");
-        PasswordField confirmPwdField = createPasswordField("Confirm new password");
+        if (!Validator.isValidEmail(email)) {
+            showError.accept("Invalid email format.");
+            return;
+        }
 
-        pwdGrid.add(createLabel("Current:"), 0, 0);
-        pwdGrid.add(currentPwdField, 1, 0);
-        pwdGrid.add(createLabel("New:"), 0, 1);
-        pwdGrid.add(newPwdField, 1, 1);
-        pwdGrid.add(createLabel("Confirm:"), 0, 2);
-        pwdGrid.add(confirmPwdField, 1, 2);
+        if (!Validator.isValidCitizenNumber(phone)) {
+            showError.accept("Invalid phone number.");
+            return;
+        }
 
-        pwdGrid.getColumnConstraints().addAll(col1, col2);
+        for (Citizen c : citizenMap.values()) {
+            if (!c.getId().equals(loggedInCitizen.getId())) {
+                if (c.getEmail().equalsIgnoreCase(email)) {
+                    showError.accept("Email is already in use.");
+                    return;
+                }
+                if (c.getNumber().equals(phone)) {
+                    showError.accept("Phone number is already in use.");
+                    return;
+                }
+            }
+        }
 
-        Button changePwdBtn = createButton("🔄 Change Password", SUCCESS_GREEN);
-        changePwdBtn.setOnAction(e -> changePassword(
-            currentPwdField.getText(),
-            newPwdField.getText(),
-            confirmPwdField.getText()
-        ));
+        loggedInCitizen.setEmail(email);
+        loggedInCitizen.setNumber(phone);
+        database.updateCitizen(loggedInCitizen.getId(), loggedInCitizen);
 
-        HBox pwdBtnBox = new HBox(10, changePwdBtn);
-        pwdBtnBox.setAlignment(Pos.CENTER_RIGHT);
+        emailLabel.setText("Email: " + email);
+        phoneLabel.setText("Phone: " + phone);
 
-        passwordSection.getChildren().addAll(pwdTitle, pwdGrid, pwdBtnBox);
+        showSuccess.accept("Contact information updated.");
+    });
 
-        VBox scrollContent = new VBox(15, infoSection, editSection, passwordSection);
-        scrollContent.setPadding(new Insets(10));
-        scrollContent.setBackground(new Background(new BackgroundFill(Color.web(DARK_BG), CornerRadii.EMPTY, Insets.EMPTY)));
+    HBox btnBox = new HBox(10, updateBtn);
+    btnBox.setAlignment(Pos.CENTER_RIGHT);
+    editSection.getChildren().addAll(editTitle, grid, btnBox);
 
-        ScrollPane scroll = new ScrollPane(scrollContent);
-        scroll.setFitToWidth(true);
-        scroll.setStyle(
-            "-fx-background: " + DARK_BG + ";" +
-            "-fx-background-color: " + DARK_BG + ";" +
-            "-fx-control-inner-background: " + DARK_BG + ";"
-        );
+    // ============================
+    // PASSWORD CHANGE
+    // ============================
+    VBox passwordSection = new VBox(12);
+    passwordSection.setPadding(new Insets(15));
+    passwordSection.setStyle(createCardStyle());
 
-        return scroll;
-    }
+    Label pwdTitle = createSectionTitle("🔐 Change Password");
+
+    GridPane pwdGrid = new GridPane();
+    pwdGrid.setHgap(15);
+    pwdGrid.setVgap(12);
+
+    PasswordField currentPwdField = createPasswordField("Current password");
+    PasswordField newPwdField = createPasswordField("New password");
+    PasswordField confirmPwdField = createPasswordField("Confirm new password");
+
+    pwdGrid.add(createLabel("Current:"), 0, 0);
+    pwdGrid.add(currentPwdField, 1, 0);
+    pwdGrid.add(createLabel("New:"), 0, 1);
+    pwdGrid.add(newPwdField, 1, 1);
+    pwdGrid.add(createLabel("Confirm:"), 0, 2);
+    pwdGrid.add(confirmPwdField, 1, 2);
+
+    pwdGrid.getColumnConstraints().addAll(col1, col2);
+
+    Button changePwdBtn = createButton("🔄 Change Password", SUCCESS_GREEN);
+    changePwdBtn.setOnAction(e -> {
+        String c = currentPwdField.getText();
+        String n = newPwdField.getText();
+        String r = confirmPwdField.getText();
+
+        if (!loggedInCitizen.getPassword().equals(c)) {
+            showError.accept("Current password is incorrect.");
+            return;
+        }
+
+        if (n.length() < 6) {
+            showError.accept("Password must be at least 6 characters.");
+            return;
+        }
+
+        if (!n.equals(r)) {
+            showError.accept("New passwords do not match.");
+            return;
+        }
+
+        loggedInCitizen.setPassword(n);
+        database.updateCitizen(loggedInCitizen.getId(), loggedInCitizen);
+
+        currentPwdField.clear();
+        newPwdField.clear();
+        confirmPwdField.clear();
+
+        showSuccess.accept("Password updated successfully.");
+    });
+
+    HBox pwdBtnBox = new HBox(10, changePwdBtn);
+    pwdBtnBox.setAlignment(Pos.CENTER_RIGHT);
+    passwordSection.getChildren().addAll(pwdTitle, pwdGrid, pwdBtnBox);
+
+    // ============================
+    // SCROLL AREA
+    // ============================
+    VBox scrollContent = new VBox(15, statusLabel, infoSection, editSection, passwordSection);
+    scrollContent.setPadding(new Insets(10));
+    scrollContent.setBackground(new Background(new BackgroundFill(Color.web(DARK_BG), CornerRadii.EMPTY, Insets.EMPTY)));
+
+    ScrollPane scroll = new ScrollPane(scrollContent);
+    scroll.setFitToWidth(true);
+    scroll.setStyle(
+        "-fx-background: " + DARK_BG + ";" +
+        "-fx-background-color: " + DARK_BG + ";" +
+        "-fx-control-inner-background: " + DARK_BG + ";"
+    );
+
+    return scroll;
+}
+
 
 
     private Node createCitizenRequestsPane() {
@@ -1077,21 +1171,18 @@ public class MainController {
         }
     }
 
-    private void findAndUpdateArchiveArea(String content) {
-        if (archiveStatusArea != null) {
-            archiveStatusArea.setText(content);
-        }
-    }
-
     private VBox createAddCitizenPane() {
         VBox addSection = new VBox(12);
         addSection.setPadding(new Insets(15));
         addSection.setStyle(createCardStyle());
         Label addTitle = createSectionTitle("➕ Add New Citizen");
 
+        Label statusLabel = new Label();
+        statusLabel.setStyle("-fx-font-size: 12;");
+
         Label idLabel = createLabel("Citizen ID (Auto-Generated):");
         TextField idField = createTextField("");
-        idField. setEditable(false);
+        idField.setEditable(false);
         idField.setStyle(
             "-fx-font-size: 12;" +
             "-fx-padding: 8;" +
@@ -1125,24 +1216,47 @@ public class MainController {
         Button addBtn = createButton("✅ Add Citizen", ACCENT_CYAN);
         addBtn.setOnAction(e -> {
             String id = idField.getText().trim();
-            String name = nameField.getText(). trim();
+            String name = nameField.getText().trim();
             String email = emailField.getText().trim();
-            String number = numberField.getText(). trim();
+            String number = numberField.getText().trim();
             String password = passwordField.getText().trim();
 
-            if (id.isEmpty() || name.isEmpty() || email. isEmpty() || number.isEmpty() || password.isEmpty()) {
-                adminCitizensStatusArea.appendText("⚠️ Please fill in all fields.\n");
+            statusLabel.setText("");
+
+            // empty check
+            if (name.isEmpty() || email.isEmpty() || number.isEmpty() || password.isEmpty()) {
+                statusLabel.setText("Please fill in all fields.");
+                statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12;");
+                return;
+            }
+
+            // validation
+            if (!Validator.isValidCitizenName(name)) {
+                statusLabel.setText("Invalid name format.");
+                statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12;");
+                return;
+            }
+            if (!Validator.isValidEmail(email)) {
+                statusLabel.setText("Invalid email format.");
+                statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12;");
+                return;
+            }
+            if (!Validator.isValidCitizenNumber(number)) {
+                statusLabel.setText("Invalid phone number format.");
+                statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12;");
                 return;
             }
 
             if (citizenMap.containsKey(id)) {
-                adminCitizensStatusArea.appendText("⚠️ Citizen ID already exists.\n");
+                statusLabel.setText("Citizen ID already exists.");
+                statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12;");
                 return;
             }
 
             for (Citizen c : citizenMap.values()) {
                 if (c.getEmail().equalsIgnoreCase(email)) {
-                    adminCitizensStatusArea. appendText("⚠️ Email already in use.\n");
+                    statusLabel.setText("Email already in use.");
+                    statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-font-size: 12;");
                     return;
                 }
             }
@@ -1152,8 +1266,14 @@ public class MainController {
             db.addCitizen(newCitizen);
             citizenMap.put(id, newCitizen);
 
-            adminCitizensStatusArea.appendText("✅ Added citizen: " + newCitizen.getName() + 
-                " (ID: " + id + ")\n");
+            // success (GREEN)
+            statusLabel.setText("Citizen added successfully: " + name);
+            statusLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-size: 12;");
+
+            // log success
+            adminCitizensStatusArea.appendText(
+                "✅ Added citizen: " + newCitizen.getName() + " (ID: " + id + ")\n"
+            );
 
             idField.setText(CitizenIdGenerator.generateCitizenId(citizenMap));
             nameField.clear();
@@ -1164,6 +1284,7 @@ public class MainController {
 
         addSection.getChildren().addAll(
             addTitle,
+            statusLabel,
             idLabel,
             idBox,
             createLabel("Name:"),
@@ -1176,9 +1297,12 @@ public class MainController {
             passwordField,
             addBtn
         );
-        
+
         return addSection;
     }
+
+
+
 
 
 
