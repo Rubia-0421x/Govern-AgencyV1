@@ -164,11 +164,11 @@ public class LoginController {
 
         usernameField = createStyledTextField("Enter your email address");
 
-        Label passLabel = new Label("🔐 PASSWORD (PHONE NUMBER)");
+        Label passLabel = new Label("🔐 PASSWORD");
         passLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
         passLabel. setTextFill(Color.web(ACCENT_CYAN));
 
-        passwordField = createStyledPasswordField("Enter your phone number");
+        passwordField = createStyledPasswordField("Enter your password");
 
         loginButton = createLoginButton();
 
@@ -215,7 +215,7 @@ public class LoginController {
         citizenInfo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
         citizenInfo.setTextFill(Color.web(SUCCESS_GREEN));
 
-        Label citizenCred = new Label("Email: Your registered email | Password: Your phone number");
+        Label citizenCred = new Label("Email: Your registered email | Password: Your password that set by the admins.");
         citizenCred.setFont(Font.font("Segoe UI", 10));
         citizenCred.setTextFill(Color.web(TEXT_GRAY));
         citizenCred.setWrapText(true);

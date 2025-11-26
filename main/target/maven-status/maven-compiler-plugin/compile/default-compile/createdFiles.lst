@@ -6,6 +6,7 @@ com\govagency\controller\DocumentReviewDialog.class
 com\govagency\controller\MainController.class
 com\govagency\util\CitizenIdGenerator.class
 com\govagency\model\ServiceRequest$Status.class
+com\govagency\util\CustomDialog.class
 com\govagency\model\Document$Status.class
 com\govagency\MainApp.class
 com\govagency\model\Archive$ArchiveType.class

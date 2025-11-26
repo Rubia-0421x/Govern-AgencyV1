@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -18,6 +17,7 @@ import com.govagency.model.Citizen;
 import com.govagency.model.Document;
 import com.govagency.model.ServiceRequest;
 import com.govagency.util.CitizenIdGenerator;
+import com.govagency.util.CustomDialog;
 import com.govagency.util.Validator;
 
 import javafx.animation.ScaleTransition;
@@ -73,6 +73,9 @@ public class MainController {
     private TextArea archiveStatusArea;
     private TextArea adminRequestsStatusArea;
     private TextArea adminDocumentsStatusArea;
+
+    private double xOffset = 0;
+    private double yOffset = 0;
 
     private static final String DARK_BG = "#0d1117";
     private static final String CARD_BG = "#161b22";
@@ -179,7 +182,8 @@ public class MainController {
         header.setStyle(
             "-fx-background-color: " + CARD_BG + ";" +
             "-fx-border-color: " + ACCENT_CYAN + ";" +
-            "-fx-border-width: 0 0 1 0;"
+            "-fx-border-width: 0 0 1 0;" +
+            "-fx-background-radius: 20 20 0 0;"
         );
 
         HBox titleBox = new HBox();
@@ -192,10 +196,8 @@ public class MainController {
         title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 24));
         title.setTextFill(Color.web(ACCENT_CYAN));
 
-        Label subtitle = new Label(
-            isAdmin ? "System Administrator" : "Welcome, " + loggedInCitizen.getName()
-        );
-        subtitle. setFont(Font.font("Segoe UI", 12));
+        Label subtitle = new Label(isAdmin ? "System Administrator" : "Welcome, " + loggedInCitizen.getName());
+        subtitle.setFont(Font.font("Segoe UI", 12));
         subtitle.setTextFill(Color.web(TEXT_GRAY));
 
         titleSection.getChildren().addAll(title, subtitle);
@@ -204,53 +206,55 @@ public class MainController {
         logoutBtn.setPrefWidth(120);
         logoutBtn.setOnAction(e -> handleLogout());
 
-        titleBox.getChildren().addAll(titleSection, logoutBtn);
+        Button minimizeBtn = createButton("—", ACCENT_CYAN);
+        minimizeBtn.setPrefWidth(40);
+        minimizeBtn.setOnAction(e -> {
+            Stage stage = (Stage) header.getScene().getWindow();
+            stage.setIconified(true);
+        });
+
+        Button closeBtn = createButton("✕", ERROR_RED);
+        closeBtn.setPrefWidth(40);
+        closeBtn.setOnAction(e -> {
+            CustomDialog dialog = new CustomDialog();
+            dialog.showAndWait("Exit", "Are you sure you want to exit?", "/com/govagency/govicon1.png");
+            if (dialog.isConfirmed()) {
+                Stage stage = (Stage) header.getScene().getWindow();
+                stage.close();
+            }
+        });
+
+
+        HBox windowButtons = new HBox(5, minimizeBtn, closeBtn);
+        windowButtons.setAlignment(Pos.CENTER_RIGHT);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        titleBox.getChildren().addAll(titleSection, spacer, logoutBtn, windowButtons);
+
         header.getChildren().add(titleBox);
+
+        header.setOnMousePressed(event -> {
+            xOffset = event.getSceneX();
+            yOffset = event.getSceneY();
+        });
+        header.setOnMouseDragged(event -> {
+            Stage stage = (Stage) header.getScene().getWindow();
+            stage.setX(event.getScreenX() - xOffset);
+            stage.setY(event.getScreenY() - yOffset);
+        });
 
         return header;
     }
 
     private void handleLogout() {
-        if (showConfirmation("Logout", "Are you sure you want to log out?")) {
+        CustomDialog dialog = new CustomDialog();
+        dialog.showAndWait("Logout", "Are you sure you want to log out?", "/com/govagency/govicon1.png");
+        if (dialog.isConfirmed()) {
             System.out.println("User logged out successfully.");
             mainApp.showLoginScreen();
         }
     }
-
-
-    private boolean showConfirmation(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-
-        alert.getDialogPane().setStyle(
-            "-fx-background-color: " + CARD_BG + ";" +
-            "-fx-padding: 20;" +
-            "-fx-font-size: 14px;" +
-            "-fx-text-fill: white;"
-        );
-
-        alert.getDialogPane().lookup(".content.label").setStyle(
-            "-fx-text-fill: white; -fx-font-size: 14px;"
-        );
-
-        alert.getDialogPane().lookup(".button-bar").setStyle(
-            "-fx-background-color: transparent;"
-        );
-
-        alert.getDialogPane().lookupButton(ButtonType.OK).setStyle(
-            "-fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-background-radius: 6;"
-        );
-
-        alert.getDialogPane().lookupButton(ButtonType.CANCEL).setStyle(
-            "-fx-background-color: #2b2b2b; -fx-text-fill: white; -fx-background-radius: 6;"
-        );
-
-        Optional<ButtonType> result = alert.showAndWait();
-        return result.isPresent() && result.get() == ButtonType.OK;
-    }
-
 
     private TabPane createCitizenPortal() {
         StackPane wrapper = new StackPane();
@@ -576,11 +580,11 @@ public class MainController {
         Label searchTitle = createSectionTitle("🔍 Search Citizens");
         TextField searchField = createTextField("Search by ID or name...");
         Button searchBtn = createButton("🔎 Search", ACCENT_CYAN);
-        searchBtn.setOnAction(e -> adminSearchCitizens(searchField. getText(). trim()));
+        searchBtn.setOnAction(e -> adminSearchCitizens(searchField.getText().trim()));
         Button showAllBtn = createButton("👁️ Show All Citizens", PRIMARY_BLUE);
         showAllBtn.setOnAction(e -> adminShowAllCitizens());
         HBox btnBox = new HBox(10, searchField, searchBtn, showAllBtn);
-        btnBox.setAlignment(Pos. CENTER_LEFT);
+        btnBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(searchField, Priority.ALWAYS);
         searchSection.getChildren().addAll(searchTitle, btnBox);
 
@@ -592,7 +596,7 @@ public class MainController {
         
         Label deleteTitle = createSectionTitle("🗑️ Delete Citizen");
         
-        TextField deleteCitizenIdField = createTextField("Enter Citizen ID to delete.. .");
+        TextField deleteCitizenIdField = createTextField("Enter Citizen ID to delete...");
         
         Button deleteCitizenBtn = createButton("🗑️ Delete Citizen", ERROR_RED);
         deleteCitizenBtn.setOnAction(e -> showDeleteCitizenDialog(deleteCitizenIdField.getText().trim()));
@@ -604,7 +608,7 @@ public class MainController {
         deleteSection.getChildren().addAll(deleteTitle, deleteBox);
 
         adminCitizensStatusArea = createTextArea();
-        VBox. setVgrow(adminCitizensStatusArea, Priority. ALWAYS);
+        VBox.setVgrow(adminCitizensStatusArea, Priority.ALWAYS);
 
         content.getChildren().addAll(
             createTitle("👥 Citizen Management"),
@@ -619,16 +623,99 @@ public class MainController {
 
         ScrollPane scroll = new ScrollPane(content);
         scroll.setFitToWidth(true);
+        
         scroll.setStyle(
             "-fx-background: " + DARK_BG + ";" +
-            "-fx-background-color: " + DARK_BG + ";" +
-            "-fx-control-inner-background: " + DARK_BG + ";"
+            "-fx-background-color: " + DARK_BG + ";"
         );
+        
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        
+        scroll.skinProperty().addListener((obs, oldSkin, newSkin) -> {
+            if (newSkin != null) {
+                javafx.application.Platform.runLater(() -> styleScrollBarNodes(scroll));
+            }
+        });
+        
         ((VBox) scroll.getContent()).setBackground(
             new Background(new BackgroundFill(Color.web(DARK_BG), CornerRadii.EMPTY, Insets.EMPTY))
         );
 
         return scroll;
+    }
+
+    private void styleScrollBarNodes(ScrollPane scrollPane) {
+        for (Node node : scrollPane.lookupAll(".scroll-bar")) {
+            if (node instanceof javafx.scene.control.ScrollBar) {
+                javafx.scene.control.ScrollBar scrollBar = (javafx.scene.control.ScrollBar) node;
+                
+                scrollBar.setStyle(
+                    "-fx-background-color: " + CARD_BG + ";" +
+                    "-fx-border-color: " + ACCENT_CYAN + ";" +
+                    "-fx-border-width: 1px;" +
+                    "-fx-border-radius: 8px;" +
+                    "-fx-background-radius: 8px;" +
+                    "-fx-pref-width: 16px;"
+                );
+                
+                for (Node track : node.lookupAll(".track")) {
+                    track.setStyle(
+                        "-fx-background-color: #0a0a15;" +
+                        "-fx-background-radius: 6px;" +
+                        "-fx-border-color: " + ACCENT_CYAN + ";" +
+                        "-fx-border-width: 1px;" +
+                        "-fx-border-radius: 6px;"
+                    );
+                }
+                
+                for (Node thumb : node.lookupAll(".thumb")) {
+                    thumb.setStyle(
+                        "-fx-background-color: " + CARD_BG + ";" +
+                        "-fx-background-radius: 6px;" +
+                        "-fx-border-color: " + PRIMARY_BLUE + ";" +
+                        "-fx-border-width: 1px;" +
+                        "-fx-border-radius: 6px;"
+                    );
+                    
+                    thumb.setOnMouseEntered(e -> thumb.setStyle(
+                        "-fx-background-color: " + CARD_BG + ";" +
+                        "-fx-background-radius: 6px;" +
+                        "-fx-border-color: " + PRIMARY_BLUE + ";" +
+                        "-fx-border-width: 1px;" +
+                        "-fx-border-radius: 6px;"
+                    ));
+                    
+                    thumb.setOnMouseExited(e -> thumb.setStyle(
+                        "-fx-background-color: " + CARD_BG + ";" +
+                        "-fx-background-radius: 6px;" +
+                        "-fx-border-color: " + PRIMARY_BLUE + ";" +
+                        "-fx-border-width: 1px;" +
+                        "-fx-border-radius: 6px;"
+                    ));
+                    
+                    thumb.setOnMousePressed(e -> thumb.setStyle(
+                        "-fx-background-color: " + CARD_BG + ";" +
+                        "-fx-background-radius: 6px;" +
+                        "-fx-border-color: #ffffff;" +
+                        "-fx-border-width: 1px;" +
+                        "-fx-border-radius: 6px;"
+                    ));
+                    
+                    thumb.setOnMouseReleased(e -> thumb.setStyle(
+                        "-fx-background-color: " + CARD_BG + ";" +
+                        "-fx-background-radius: 6px;" +
+                        "-fx-border-color: " + PRIMARY_BLUE + ";" +
+                        "-fx-border-width: 1px;" +
+                        "-fx-border-radius: 6px;"
+                    ));
+                }
+                
+                for (Node button : node.lookupAll(".increment-button, .decrement-button")) {
+                    button.setVisible(false);
+                    button.setManaged(false);
+                }
+            }
+        }
     }
 
     private void showDeleteCitizenDialog(String citizenIdToDelete) {
@@ -1327,9 +1414,12 @@ public class MainController {
             }
         }
 
-        if (!showConfirmation("Update Profile", "Update your profile with the new information? ")) {
+        CustomDialog dialog = new CustomDialog();
+        dialog.showAndWait("Update Profile", "Update your profile with the new information?", "/com/govagency/govicon1.png");
+        if (!dialog.isConfirmed()) {
             return;
         }
+
 
         loggedInCitizen.setEmail(email);
         loggedInCitizen. setNumber(phone);
@@ -1365,9 +1455,16 @@ public class MainController {
             return;
         }
 
-        if (! showConfirmation("Change Password", "Change your password?\n\nYou will need to log in again with your new password.")) {
+        CustomDialog dialog = new CustomDialog();
+        dialog.showAndWait(
+            "Change Password",
+            "Change your password?\n\nYou will need to log in again with your new password.",
+            "/com/govagency/govicon1.png"
+        );
+        if (!dialog.isConfirmed()) {
             return;
         }
+
 
         loggedInCitizen.setPassword(newPassword);
         database.updateCitizen(loggedInCitizen. getId(), loggedInCitizen);
@@ -1386,12 +1483,16 @@ public class MainController {
             return;
         }
 
-        if (!showConfirmation(
+        CustomDialog dialog = new CustomDialog();
+        dialog.showAndWait(
             "Submit Request",
-            "Submit a " + type + " request?\n\n" +
-            "Description: " + description)) {
+            "Submit a " + type + " request?\n\nDescription: " + description,
+            "/com/govagency/govicon1.png"
+        );
+        if (!dialog.isConfirmed()) {
             return;
         }
+
 
         String reqId = generateRequestId(loggedInCitizen.getId());
         ServiceRequest sr = new ServiceRequest(reqId, loggedInCitizen.getId(), type, description);
@@ -1810,12 +1911,17 @@ public class MainController {
             return;
         }
 
-        if (! showConfirmation(
+        CustomDialog dialog = new CustomDialog();
+        dialog.showAndWait(
             "Update Document Status",
-            "Set document status to " + newStatus + "?" + 
-            (remarks. isEmpty() ? "" : "\n\nRemarks: " + remarks))) {
+            "Set document status to " + newStatus + "?" +
+            (remarks.isEmpty() ? "" : "\n\nRemarks: " + remarks),
+            "/com/govagency/govicon1.png"
+        );
+        if (!dialog.isConfirmed()) {
             return;
         }
+
 
         targetDoc.setStatus(newStatus);
         targetDoc.setReviewComment(remarks);

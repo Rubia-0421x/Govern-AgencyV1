@@ -1,0 +1,18 @@
+
+
+Version:	3.50
+CmdLine:	C:\Users\rayve\Desktop\Rayven Script\RayvenFileBSIT\Javacode\test\main\target\main1.exe --l4j-debug
+JNI:		No
+WOW64:		Yes
+Working dir:	C:\Users\rayve\Desktop\Rayven Script\RayvenFileBSIT\Javacode\test\main\target\.
+Requires JDK:	No
+Requires 64-Bit: No
+Java min ver:	1.017.000
+Java max ver:	1.025.000
+JRE paths:	custom-jre
+Check launcher:	C:\Users\rayve\Desktop\Rayven Script\RayvenFileBSIT\Javacode\test\main\target\custom-jre\bin\javaw.exe (OK)
+Version string: 1.017.000_016 / 64-Bit (OK)
+Launcher:	C:\Users\rayve\Desktop\Rayven Script\RayvenFileBSIT\Javacode\test\main\target\custom-jre\bin\javaw.exe
+Launcher args:	-jar "C:\Users\rayve\Desktop\Rayven Script\RayvenFileBSIT\Javacode\test\main\target\main1.exe" --module-path "C:\Program Files\Java\javafx-sdk-25.0.1\lib" --add-modules javafx.controls,javafx.fxml
+Args length:	196/32768 chars
+Exit code:	0
