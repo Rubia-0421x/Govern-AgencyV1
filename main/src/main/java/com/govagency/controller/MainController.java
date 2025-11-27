@@ -905,9 +905,11 @@ public class MainController {
             citizenMap.remove(citizenId);
 
             showSuccess(
-                "✅ Citizen archived and deleted successfully!\n\n" +
-                "Archived Citizen:\n" +
-                "ID: " + deletedCitizen. getId() + "\n" +
+                """
+                \u2705 Citizen archived and deleted successfully!
+                
+                Archived Citizen:
+                ID: """ + deletedCitizen. getId() + "\n" +
                 "Name: " + deletedCitizen.getName() + "\n" +
                 "Email: " + deletedCitizen. getEmail() + "\n\n" +
                 "Reason: " + reason + "\n\n" +
@@ -1012,14 +1014,16 @@ public class MainController {
         } else {
             for (JSONObject arch : archives) {
                 try {
-                    sb.append(String.format(
-                        "Archive ID: %s\n" +
-                        "Type: %s\n" +
-                        "Entity ID: %s\n" +
-                        "Archived By: %s\n" +
-                        "Date: %s\n" +
-                        "Reason: %s\n" +
-                        "────────────────────────────────────────────────────────────\n\n",
+                    sb.append(String.format("""
+                                            Archive ID: %s
+                                            Type: %s
+                                            Entity ID: %s
+                                            Archived By: %s
+                                            Date: %s
+                                            Reason: %s
+                                            \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+                                            
+                                            """,
                         arch.getString("archiveId"),
                         arch. getString("type"),
                         arch.getString("entityId"),
@@ -1052,13 +1056,15 @@ public class MainController {
         } else {
             for (JSONObject arch : archives) {
                 try {
-                    sb.append(String.format(
-                        "Archive ID: %s\n" +
-                        "Entity ID: %s\n" +
-                        "Archived By: %s\n" +
-                        "Date: %s\n" +
-                        "Reason: %s\n" +
-                        "────────────────────────────────────────────────────────────\n\n",
+                    sb.append(String.format("""
+                                            Archive ID: %s
+                                            Entity ID: %s
+                                            Archived By: %s
+                                            Date: %s
+                                            Reason: %s
+                                            \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+                                            
+                                            """,
                         arch.getString("archiveId"),
                         arch.getString("entityId"),
                         arch.getString("archivedBy"),
@@ -1113,8 +1119,10 @@ public class MainController {
             String details = deletedCitizenArchive. getString("details");
             JSONObject citizenData = new JSONObject(details);
             
-            Label info = new Label("Restore this citizen account:\n\n" +
-                "ID: " + citizenData.getString("id") + "\n" +
+            Label info = new Label("""
+                                   Restore this citizen account:
+                                   
+                                   ID: """ + citizenData.getString("id") + "\n" +
                 "Name: " + citizenData.getString("name") + "\n" +
                 "Email: " + citizenData.getString("email") + "\n" +
                 "Phone: " + citizenData.getString("number") + "\n\n" +
@@ -1151,8 +1159,10 @@ public class MainController {
                 citizenMap.put(restoredCitizen.getId(), restoredCitizen);
 
                 showSuccess(
-                    "✅ Citizen account restored successfully!\n\n" +
-                    "ID: " + restoredCitizen.getId() + "\n" +
+                    """
+                    \u2705 Citizen account restored successfully!
+                    
+                    ID: """ + restoredCitizen.getId() + "\n" +
                     "Name: " + restoredCitizen.getName() + "\n" +
                     "Email: " + restoredCitizen. getEmail(),
                     archiveStatusArea
@@ -1554,8 +1564,9 @@ public class MainController {
         database.addRequest(sr);
 
         showSuccess(
-            "✅ Request submitted successfully!\n" +
-            "Request ID: " + reqId,
+            """
+            \u2705 Request submitted successfully!
+            Request ID: """ + reqId,
             citizenRequestsStatusArea
         );
     }
@@ -1580,10 +1591,12 @@ public class MainController {
 
         for (ServiceRequest sr : myRequests) {
             sb.append(String.format(
-                "ID: %s\n" +
-                "Type: %s\n" +
-                "Description: %s\n" +
-                "Status: %s %s\n" +
+                """
+                ID: %s
+                Type: %s
+                Description: %s
+                Status: %s %s
+                """ +
                 (sr.getAdminNote().isEmpty() ? "" : "Admin Note: %s\n") +
                 "────────────────────────────────────────────────────────────\n\n",
                 sr.getId(),
@@ -1633,8 +1646,10 @@ public class MainController {
         }
 
         showSuccess(
-            "✅ Document uploaded successfully!\n\n" +
-            "Document ID: " + docId + "\n" +
+            """
+            \u2705 Document uploaded successfully!
+            
+            Document ID: """ + docId + "\n" +
             "Request ID: " + requestId + "\n" +
             "File: " + filePath + "\n" +
             "Status: PENDING REVIEW",
@@ -1672,11 +1687,13 @@ public class MainController {
             }
 
             sb.append(String.format(
-                "Document ID: %s\n" +
-                "Request ID: %s\n" +
-                "File: %s\n" +
-                "Status: %s %s\n" +
-                "Uploaded: %s\n" +
+                """
+                Document ID: %s
+                Request ID: %s
+                File: %s
+                Status: %s %s
+                Uploaded: %s
+                """ +
                 (doc.getReviewComment(). isEmpty() ? "" : "Officer's Note: %s\n") +
                 (relatedRequest != null && ! relatedRequest.getAdminNote().isEmpty() ? 
                     "Request Note: %s\n" : "") +
@@ -1711,12 +1728,14 @@ public class MainController {
 
         for (Citizen c : citizenMap.values()) {
             if (c.getId().contains(search) || c.getName().toLowerCase().contains(searchLower)) {
-                sb.append(String.format(
-                    "ID: %s\n" +
-                    "Name: %s\n" +
-                    "Email: %s\n" +
-                    "Phone: %s\n" +
-                    "────────────────────────────────────────────────────────────\n\n",
+                sb.append(String.format("""
+                                        ID: %s
+                                        Name: %s
+                                        Email: %s
+                                        Phone: %s
+                                        \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+                                        
+                                        """,
                     c.getId(),
                     c.getName(),
                     c.getEmail(),
@@ -1746,11 +1765,13 @@ public class MainController {
 
         int count = 1;
         for (Citizen c : citizenMap.values()) {
-            sb.append(String.format(
-                "%d. ID: %s\n" +
-                "   Name: %s\n" +
-                "   Email: %s\n" +
-                "   Phone: %s\n\n",
+            sb.append(String.format("""
+                                    %d. ID: %s
+                                       Name: %s
+                                       Email: %s
+                                       Phone: %s
+                                    
+                                    """,
                 count,
                 c.getId(),
                 c.getName(),
@@ -1810,11 +1831,13 @@ public class MainController {
 
         for (ServiceRequest sr : reqs) {
             sb.append(String.format(
-                "Request ID: %s\n" +
-                "Citizen ID: %s\n" +
-                "Type: %s\n" +
-                "Description: %s\n" +
-                "Status: %s %s\n" +
+                """
+                Request ID: %s
+                Citizen ID: %s
+                Type: %s
+                Description: %s
+                Status: %s %s
+                """ +
                 (sr.getAdminNote().isEmpty() ? "" : "Note: %s\n") +
                 "────────────────────────────────────────────────────────────\n\n",
                 sr.getId(),
@@ -1854,8 +1877,10 @@ public class MainController {
         database.updateRequest(requestId, targetReq);
 
         showSuccess(
-            "✅ Request status updated!\n\n" +
-            "Request ID: " + requestId + "\n" +
+            """
+            \u2705 Request status updated!
+            
+            Request ID: """ + requestId + "\n" +
             "New Status: " + newStatus + "\n" +
             (note.isEmpty() ? "" : "Note: " + note),
             adminRequestsStatusArea
@@ -1985,8 +2010,9 @@ public class MainController {
         database.updateDocument(docId, targetDoc);
 
         showSuccess(
-            "✅ Document status updated!\n" +
-            "Status: " + newStatus,
+            """
+            \u2705 Document status updated!
+            Status: """ + newStatus,
             adminDocumentsStatusArea
         );
     }
