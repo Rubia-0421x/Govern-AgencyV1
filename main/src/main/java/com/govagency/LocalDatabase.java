@@ -16,7 +16,7 @@ import com.govagency.model.Citizen;
 import com.govagency.model.Document;
 import com.govagency.model.ServiceRequest;
 
-public class LocalDatabase {
+public class LocalDatabase extends Database {
 
     private static final String DB_PATH = "database.json";
     private final JSONObject root;

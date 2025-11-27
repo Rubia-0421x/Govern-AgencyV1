@@ -94,8 +94,7 @@ public class MainController {
     private final List<ServiceRequest> serviceRequests = new ArrayList<>();
     private final List<Document> documents = new ArrayList<>();
 
-    public MainController(boolean isAdmin, Citizen citizen, Map<String, Citizen> citizenMap, 
-                         Stage primaryStage, MainApp mainApp) {
+    public MainController(boolean isAdmin, Citizen citizen, Map<String, Citizen> citizenMap, Stage primaryStage, MainApp mainApp) {
         this.isAdmin = isAdmin;
         this. loggedInCitizen = citizen;
         this.citizenMap = citizenMap != null ? citizenMap : new HashMap<>();
