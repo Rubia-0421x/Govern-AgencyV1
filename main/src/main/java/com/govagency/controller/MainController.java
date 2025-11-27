@@ -2017,7 +2017,6 @@ public class MainController {
         );
     }
 
-
     private String generateRequestId(String citizenId) {
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMddyy-HHmmss");
