@@ -73,6 +73,7 @@ public class LocalDatabase extends Database {
         }
     }
 
+    @Override
     public void addCitizen(Citizen c) {
         try {
             JSONArray arr = root.optJSONArray("citizens");
@@ -95,6 +96,7 @@ public class LocalDatabase extends Database {
         }
     }
 
+    @Override
     public void deleteCitizen(String citizenId) {
         try {
             JSONArray arr = root.optJSONArray("citizens");
@@ -116,6 +118,7 @@ public class LocalDatabase extends Database {
         }
     }
 
+    @Override
     public void updateCitizen(String citizenId, Citizen c) {
         try {
             JSONArray arr = root.optJSONArray("citizens");
@@ -138,6 +141,7 @@ public class LocalDatabase extends Database {
         }
     }
 
+    @Override
     public void addDocument(Document d) {
         try {
             JSONArray arr = root.optJSONArray("documents");
@@ -173,6 +177,7 @@ public class LocalDatabase extends Database {
         }
     }
 
+    @Override
     public void deleteDocument(String documentId) {
         try {
             JSONArray arr = root.optJSONArray("documents");
@@ -194,6 +199,7 @@ public class LocalDatabase extends Database {
         }
     }
 
+    @Override
     public void updateDocument(String documentId, Document d) {
         try {
             JSONArray arr = root.optJSONArray("documents");
@@ -218,6 +224,7 @@ public class LocalDatabase extends Database {
         }
     }
 
+    @Override
     public void addRequest(ServiceRequest r) {
         try {
             JSONArray arr = root.optJSONArray("requests");
@@ -243,6 +250,7 @@ public class LocalDatabase extends Database {
         }
     }
 
+    @Override
     public void deleteRequest(String requestId) {
         try {
             JSONArray arr = root.optJSONArray("requests");
@@ -264,6 +272,7 @@ public class LocalDatabase extends Database {
         }
     }
 
+    @Override
     public void updateRequest(String requestId, ServiceRequest r) {
         try {
             JSONArray arr = root.optJSONArray("requests");
@@ -285,6 +294,7 @@ public class LocalDatabase extends Database {
         }
     }
 
+    @Override
     public List<JSONObject> getAllCitizens() {
         JSONArray arr = root.optJSONArray("citizens");
         List<JSONObject> list = new ArrayList<>();
@@ -302,6 +312,7 @@ public class LocalDatabase extends Database {
         return list;
     }
 
+    @Override
     public List<JSONObject> getAllDocuments() {
         JSONArray arr = root.optJSONArray("documents");
         List<JSONObject> list = new ArrayList<>();
@@ -323,6 +334,7 @@ public class LocalDatabase extends Database {
         return list;
     }
 
+    @Override
     public List<JSONObject> getAllRequests() {
         JSONArray arr = root.optJSONArray("requests");
         List<JSONObject> list = new ArrayList<>();
