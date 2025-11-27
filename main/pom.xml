@@ -15,7 +15,6 @@
         <javafx.version>17.0.8</javafx.version>
     </properties>
 
-
     <dependencies>
         <!-- JavaFX -->
         <dependency>
