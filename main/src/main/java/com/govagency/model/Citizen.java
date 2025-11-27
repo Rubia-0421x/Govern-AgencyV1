@@ -19,7 +19,7 @@ public class Citizen {
         this.name = name;
         this.number = number;
         this.email = email;
-        this.password = "password"; // Default password
+        this.password = "password";
     }
 
     /**

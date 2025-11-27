@@ -5,6 +5,7 @@ com\govagency\model\Document.class
 com\govagency\controller\DocumentReviewDialog.class
 com\govagency\controller\MainController.class
 com\govagency\util\CitizenIdGenerator.class
+com\govagency\util\Result.class
 com\govagency\model\ServiceRequest$Status.class
 com\govagency\util\CustomDialog.class
 com\govagency\model\Document$Status.class

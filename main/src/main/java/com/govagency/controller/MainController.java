@@ -278,210 +278,196 @@ public class MainController {
     }
 
     private Node createCitizenProfilePane() {
+        VBox content = new VBox(20);
+        content.setPadding(new Insets(20));
+        content.setBackground(new Background(new BackgroundFill(Color.web(DARK_BG), CornerRadii.EMPTY, Insets.EMPTY)));
 
-    VBox content = new VBox(20);
-    content.setPadding(new Insets(20));
-    content.setBackground(new Background(new BackgroundFill(Color.web(DARK_BG), CornerRadii.EMPTY, Insets.EMPTY)));
+        Label statusLabel = new Label();
+        statusLabel.setStyle("-fx-font-size: 12; -fx-padding: 5; -fx-background-radius: 4;");
+        statusLabel.setVisible(false);
 
-    // STATUS LABEL
-    Label statusLabel = new Label();
-    statusLabel.setStyle("-fx-font-size: 12; -fx-padding: 5; -fx-background-radius: 4;");
-    statusLabel.setVisible(false);
+        PauseTransition hideStatus = new PauseTransition(Duration.seconds(3));
+        hideStatus.setOnFinished(evt -> statusLabel.setVisible(false));
 
-    PauseTransition hideStatus = new PauseTransition(Duration.seconds(3));
-    hideStatus.setOnFinished(evt -> statusLabel.setVisible(false));
+        Consumer<String> showError = msg -> {
+            statusLabel.setText("⚠️ " + msg);
+            statusLabel.setStyle("-fx-text-fill: #ff6b6b; -fx-background-color: #2a0000; -fx-padding: 5; -fx-background-radius: 4;");
+            statusLabel.setVisible(true);
+            hideStatus.playFromStart();
+        };
 
-    Consumer<String> showError = msg -> {
-        statusLabel.setText("⚠️ " + msg);
-        statusLabel.setStyle("-fx-text-fill: #ff6b6b; -fx-background-color: #2a0000; -fx-padding: 5; -fx-background-radius: 4;");
-        statusLabel.setVisible(true);
-        hideStatus.playFromStart();
-    };
+        Consumer<String> showSuccess = msg -> {
+            statusLabel.setText("✅ " + msg);
+            statusLabel.setStyle("-fx-text-fill: #4cffb0; -fx-background-color: #002a1a; -fx-padding: 5; -fx-background-radius: 4;");
+            statusLabel.setVisible(true);
+            hideStatus.playFromStart();
+        };
 
-    Consumer<String> showSuccess = msg -> {
-        statusLabel.setText("✅ " + msg);
-        statusLabel.setStyle("-fx-text-fill: #4cffb0; -fx-background-color: #002a1a; -fx-padding: 5; -fx-background-radius: 4;");
-        statusLabel.setVisible(true);
-        hideStatus.playFromStart();
-    };
+        VBox infoSection = new VBox(10);
+        infoSection.setPadding(new Insets(15));
+        infoSection.setStyle(createCardStyle());
 
-    // ============================
-    // INFO SECTION
-    // ============================
-    VBox infoSection = new VBox(10);
-    infoSection.setPadding(new Insets(15));
-    infoSection.setStyle(createCardStyle());
+        Label infoTitle = createSectionTitle("📋 Personal Information");
+        Label idLabel = createInfoLabel("Citizen ID: " + loggedInCitizen.getId());
+        Label nameLabel = createInfoLabel("Name: " + loggedInCitizen.getName());
+        Label emailLabel = createInfoLabel("Email: " + loggedInCitizen.getEmail());
+        Label phoneLabel = createInfoLabel("Phone: " + loggedInCitizen.getNumber());
 
-    Label infoTitle = createSectionTitle("📋 Personal Information");
-    Label idLabel = createInfoLabel("Citizen ID: " + loggedInCitizen.getId());
-    Label nameLabel = createInfoLabel("Name: " + loggedInCitizen.getName());
-    Label emailLabel = createInfoLabel("Email: " + loggedInCitizen.getEmail());
-    Label phoneLabel = createInfoLabel("Phone: " + loggedInCitizen.getNumber());
+        infoSection.getChildren().addAll(infoTitle, idLabel, nameLabel, emailLabel, phoneLabel);
 
-    infoSection.getChildren().addAll(infoTitle, idLabel, nameLabel, emailLabel, phoneLabel);
+        VBox editSection = new VBox(12);
+        editSection.setPadding(new Insets(15));
+        editSection.setStyle(createCardStyle());
 
-    // ============================
-    // UPDATE CONTACT INFO
-    // ============================
-    VBox editSection = new VBox(12);
-    editSection.setPadding(new Insets(15));
-    editSection.setStyle(createCardStyle());
+        Label editTitle = createSectionTitle("✏️ Update Contact Information");
 
-    Label editTitle = createSectionTitle("✏️ Update Contact Information");
+        GridPane grid = new GridPane();
+        grid.setHgap(15);
+        grid.setVgap(12);
 
-    GridPane grid = new GridPane();
-    grid.setHgap(15);
-    grid.setVgap(12);
+        TextField emailField = createTextField(loggedInCitizen.getEmail());
+        TextField phoneField = createTextField(loggedInCitizen.getNumber());
 
-    TextField emailField = createTextField(loggedInCitizen.getEmail());
-    TextField phoneField = createTextField(loggedInCitizen.getNumber());
+        grid.add(createLabel("Email:"), 0, 0);
+        grid.add(emailField, 1, 0);
+        grid.add(createLabel("Phone:"), 0, 1);
+        grid.add(phoneField, 1, 1);
 
-    grid.add(createLabel("Email:"), 0, 0);
-    grid.add(emailField, 1, 0);
-    grid.add(createLabel("Phone:"), 0, 1);
-    grid.add(phoneField, 1, 1);
+        ColumnConstraints col1 = new ColumnConstraints(80);
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setHgrow(Priority.ALWAYS);
+        grid.getColumnConstraints().addAll(col1, col2);
 
-    ColumnConstraints col1 = new ColumnConstraints(80);
-    ColumnConstraints col2 = new ColumnConstraints();
-    col2.setHgrow(Priority.ALWAYS);
-    grid.getColumnConstraints().addAll(col1, col2);
+        Button updateBtn = createButton("💾 Update", SUCCESS_GREEN);
+        updateBtn.setOnAction(e -> {
+            String email = emailField.getText().trim();
+            String phone = phoneField.getText().trim();
 
-    Button updateBtn = createButton("💾 Update", SUCCESS_GREEN);
-    updateBtn.setOnAction(e -> {
-        String email = emailField.getText().trim();
-        String phone = phoneField.getText().trim();
+            if (!Validator.isValidEmail(email)) {
+                showError.accept("Invalid email format.");
+                return;
+            }
 
-        if (!Validator.isValidEmail(email)) {
-            showError.accept("Invalid email format.");
-            return;
-        }
+            if (!Validator.isValidCitizenNumber(phone)) {
+                showError.accept("Invalid phone number.");
+                return;
+            }
 
-        if (!Validator.isValidCitizenNumber(phone)) {
-            showError.accept("Invalid phone number.");
-            return;
-        }
-
-        for (Citizen c : citizenMap.values()) {
-            if (!c.getId().equals(loggedInCitizen.getId())) {
-                if (c.getEmail().equalsIgnoreCase(email)) {
-                    showError.accept("Email is already in use.");
-                    return;
-                }
-                if (c.getNumber().equals(phone)) {
-                    showError.accept("Phone number is already in use.");
-                    return;
+            for (Citizen c : citizenMap.values()) {
+                if (!c.getId().equals(loggedInCitizen.getId())) {
+                    if (c.getEmail().equalsIgnoreCase(email)) {
+                        showError.accept("Email is already in use.");
+                        return;
+                    }
+                    if (c.getNumber().equals(phone)) {
+                        showError.accept("Phone number is already in use.");
+                        return;
+                    }
                 }
             }
-        }
 
-        CustomDialog dialog = new CustomDialog();
-        dialog.showAndWait("Update Profile", "Update your profile with the new information?", "/com/govagency/govicon1.png");
-        if (!dialog.isConfirmed()) {
-            return;
-        }
+            CustomDialog dialog = new CustomDialog();
+            dialog.showAndWait("Update Profile", "Update your profile with the new information?", "/com/govagency/govicon1.png");
+            if (!dialog.isConfirmed()) {
+                return;
+            }
 
-        loggedInCitizen.setEmail(email);
-        loggedInCitizen.setNumber(phone);
-        database.updateCitizen(loggedInCitizen.getId(), loggedInCitizen);
+            loggedInCitizen.setEmail(email);
+            loggedInCitizen.setNumber(phone);
+            database.updateCitizen(loggedInCitizen.getId(), loggedInCitizen);
 
-        emailLabel.setText("Email: " + email);
-        phoneLabel.setText("Phone: " + phone);
+            emailLabel.setText("Email: " + email);
+            phoneLabel.setText("Phone: " + phone);
 
-        showSuccess.accept("Contact information updated.");
-    });
+            showSuccess.accept("Contact information updated.");
+        });
 
-    HBox btnBox = new HBox(10, updateBtn);
-    btnBox.setAlignment(Pos.CENTER_RIGHT);
-    editSection.getChildren().addAll(editTitle, grid, btnBox);
+        HBox btnBox = new HBox(10, updateBtn);
+        btnBox.setAlignment(Pos.CENTER_RIGHT);
+        editSection.getChildren().addAll(editTitle, grid, btnBox);
 
-    // ============================
-    // PASSWORD CHANGE
-    // ============================
-    VBox passwordSection = new VBox(12);
-    passwordSection.setPadding(new Insets(15));
-    passwordSection.setStyle(createCardStyle());
+        VBox passwordSection = new VBox(12);
+        passwordSection.setPadding(new Insets(15));
+        passwordSection.setStyle(createCardStyle());
 
-    Label pwdTitle = createSectionTitle("🔐 Change Password");
+        Label pwdTitle = createSectionTitle("🔐 Change Password");
 
-    GridPane pwdGrid = new GridPane();
-    pwdGrid.setHgap(15);
-    pwdGrid.setVgap(12);
+        GridPane pwdGrid = new GridPane();
+        pwdGrid.setHgap(15);
+        pwdGrid.setVgap(12);
 
-    PasswordField currentPwdField = createPasswordField("Current password");
-    PasswordField newPwdField = createPasswordField("New password");
-    PasswordField confirmPwdField = createPasswordField("Confirm new password");
+        PasswordField currentPwdField = createPasswordField("Current password");
+        PasswordField newPwdField = createPasswordField("New password");
+        PasswordField confirmPwdField = createPasswordField("Confirm new password");
 
-    pwdGrid.add(createLabel("Current:"), 0, 0);
-    pwdGrid.add(currentPwdField, 1, 0);
-    pwdGrid.add(createLabel("New:"), 0, 1);
-    pwdGrid.add(newPwdField, 1, 1);
-    pwdGrid.add(createLabel("Confirm:"), 0, 2);
-    pwdGrid.add(confirmPwdField, 1, 2);
+        pwdGrid.add(createLabel("Current:"), 0, 0);
+        pwdGrid.add(currentPwdField, 1, 0);
+        pwdGrid.add(createLabel("New:"), 0, 1);
+        pwdGrid.add(newPwdField, 1, 1);
+        pwdGrid.add(createLabel("Confirm:"), 0, 2);
+        pwdGrid.add(confirmPwdField, 1, 2);
 
-    pwdGrid.getColumnConstraints().addAll(col1, col2);
+        pwdGrid.getColumnConstraints().addAll(col1, col2);
 
-    Button changePwdBtn = createButton("🔄 Change Password", SUCCESS_GREEN);
-    changePwdBtn.setOnAction(e -> {
-        String c = currentPwdField.getText();
-        String n = newPwdField.getText();
-        String r = confirmPwdField.getText();
+        Button changePwdBtn = createButton("🔄 Change Password", SUCCESS_GREEN);
+        changePwdBtn.setOnAction(e -> {
+            String c = currentPwdField.getText();
+            String n = newPwdField.getText();
+            String r = confirmPwdField.getText();
 
-        if (!loggedInCitizen.getPassword().equals(c)) {
-            showError.accept("Current password is incorrect.");
-            return;
-        }
+            if (!loggedInCitizen.getPassword().equals(c)) {
+                showError.accept("Current password is incorrect.");
+                return;
+            }
 
-        if (n.length() < 6) {
-            showError.accept("Password must be at least 6 characters.");
-            return;
-        }
+            if (n.length() < 6) {
+                showError.accept("Password must be at least 6 characters.");
+                return;
+            }
 
-        if (!n.equals(r)) {
-            showError.accept("New passwords do not match.");
-            return;
-        }
+            if (!n.equals(r)) {
+                showError.accept("New passwords do not match.");
+                return;
+            }
 
-        CustomDialog dialog = new CustomDialog();
-        dialog.showAndWait(
-            "Change Password",
-            "Change your password?\n\nYou will need to log in again with your new password.",
-            "/com/govagency/govicon1.png"
+            CustomDialog dialog = new CustomDialog();
+            dialog.showAndWait(
+                "Change Password",
+                "Change your password?\n\nYou will need to log in again with your new password.",
+                "/com/govagency/govicon1.png"
+            );
+            if (!dialog.isConfirmed()) {
+                return;
+            }
+
+            loggedInCitizen.setPassword(n);
+            database.updateCitizen(loggedInCitizen.getId(), loggedInCitizen);
+
+            currentPwdField.clear();
+            newPwdField.clear();
+            confirmPwdField.clear();
+
+            showSuccess.accept("Password updated successfully.");
+        });
+
+        HBox pwdBtnBox = new HBox(10, changePwdBtn);
+        pwdBtnBox.setAlignment(Pos.CENTER_RIGHT);
+        passwordSection.getChildren().addAll(pwdTitle, pwdGrid, pwdBtnBox);
+
+        VBox scrollContent = new VBox(15, statusLabel, infoSection, editSection, passwordSection);
+        scrollContent.setPadding(new Insets(10));
+        scrollContent.setBackground(new Background(new BackgroundFill(Color.web(DARK_BG), CornerRadii.EMPTY, Insets.EMPTY)));
+
+        ScrollPane scroll = new ScrollPane(scrollContent);
+        scroll.setFitToWidth(true);
+        scroll.setStyle(
+            "-fx-background: " + DARK_BG + ";" +
+            "-fx-background-color: " + DARK_BG + ";" +
+            "-fx-control-inner-background: " + DARK_BG + ";"
         );
-        if (!dialog.isConfirmed()) {
-            return;
-        }
 
-        loggedInCitizen.setPassword(n);
-        database.updateCitizen(loggedInCitizen.getId(), loggedInCitizen);
-
-        currentPwdField.clear();
-        newPwdField.clear();
-        confirmPwdField.clear();
-
-        showSuccess.accept("Password updated successfully.");
-    });
-
-    HBox pwdBtnBox = new HBox(10, changePwdBtn);
-    pwdBtnBox.setAlignment(Pos.CENTER_RIGHT);
-    passwordSection.getChildren().addAll(pwdTitle, pwdGrid, pwdBtnBox);
-
-    // ============================
-    // SCROLL AREA
-    // ============================
-    VBox scrollContent = new VBox(15, statusLabel, infoSection, editSection, passwordSection);
-    scrollContent.setPadding(new Insets(10));
-    scrollContent.setBackground(new Background(new BackgroundFill(Color.web(DARK_BG), CornerRadii.EMPTY, Insets.EMPTY)));
-
-    ScrollPane scroll = new ScrollPane(scrollContent);
-    scroll.setFitToWidth(true);
-    scroll.setStyle(
-        "-fx-background: " + DARK_BG + ";" +
-        "-fx-background-color: " + DARK_BG + ";" +
-        "-fx-control-inner-background: " + DARK_BG + ";"
-    );
-
-    return scroll;
-}
+        return scroll;
+    }
 
 
 
@@ -745,9 +731,8 @@ public class MainController {
             new Background(new BackgroundFill(Color.web(DARK_BG), CornerRadii.EMPTY, Insets.EMPTY))
         );
 
-        // AUTO SCROLL WHEN TEXT AREA UPDATES
         adminCitizensStatusArea.textProperty().addListener((obs, oldText, newText) -> {
-            Platform.runLater(() -> scroll.setVvalue(1.0)); // scrolls to bottom
+            Platform.runLater(() -> scroll.setVvalue(1.0));
         });
 
         return scroll;
@@ -1188,148 +1173,143 @@ public class MainController {
     }
 
     private VBox createAddCitizenPane() {
-    VBox addSection = new VBox(12);
-    addSection.setPadding(new Insets(15));
-    addSection.setStyle(createCardStyle());
-    addSection.setFillWidth(true);
+        VBox addSection = new VBox(12);
+        addSection.setPadding(new Insets(15));
+        addSection.setStyle(createCardStyle());
+        addSection.setFillWidth(true);
 
-    Label addTitle = createSectionTitle("➕ Add New Citizen");
+        Label addTitle = createSectionTitle("➕ Add New Citizen");
 
-    // STATUS LABEL
-    Label statusLabel = new Label();
-    statusLabel.setWrapText(true);
-    statusLabel.setMaxWidth(Double.MAX_VALUE);
-    statusLabel.setVisible(false);
-    statusLabel.setStyle("-fx-font-size: 12; -fx-padding: 5; -fx-background-radius: 4;");
-    VBox.setVgrow(statusLabel, Priority.NEVER);
+        Label statusLabel = new Label();
+        statusLabel.setWrapText(true);
+        statusLabel.setMaxWidth(Double.MAX_VALUE);
+        statusLabel.setVisible(false);
+        statusLabel.setStyle("-fx-font-size: 12; -fx-padding: 5; -fx-background-radius: 4;");
+        VBox.setVgrow(statusLabel, Priority.NEVER);
 
-    PauseTransition hideStatus = new PauseTransition(Duration.seconds(3));
-    hideStatus.setOnFinished(evt -> statusLabel.setVisible(false));
+        PauseTransition hideStatus = new PauseTransition(Duration.seconds(3));
+        hideStatus.setOnFinished(evt -> statusLabel.setVisible(false));
 
-    Consumer<String> showError = msg -> {
-        statusLabel.setText("⚠️ " + msg);
-        statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-background-color: #2a0000; -fx-padding: 5; -fx-background-radius: 4;");
-        statusLabel.setVisible(true);
-        hideStatus.playFromStart();
-    };
+        Consumer<String> showError = msg -> {
+            statusLabel.setText("⚠️ " + msg);
+            statusLabel.setStyle("-fx-text-fill: #ff5555; -fx-background-color: #2a0000; -fx-padding: 5; -fx-background-radius: 4;");
+            statusLabel.setVisible(true);
+            hideStatus.playFromStart();
+        };
 
-    Consumer<String> showSuccess = msg -> {
-        statusLabel.setText("✅ " + msg);
-        statusLabel.setStyle("-fx-text-fill: #4CAF50; -fx-background-color: #002a1a; -fx-padding: 5; -fx-background-radius: 4;");
-        statusLabel.setVisible(true);
-        hideStatus.playFromStart();
-    };
+        Consumer<String> showSuccess = msg -> {
+            statusLabel.setText("✅ " + msg);
+            statusLabel.setStyle("-fx-text-fill: #4CAF50; -fx-background-color: #002a1a; -fx-padding: 5; -fx-background-radius: 4;");
+            statusLabel.setVisible(true);
+            hideStatus.playFromStart();
+        };
 
-    Label idLabel = createLabel("Citizen ID (Auto-Generated):");
-    TextField idField = createTextField("");
-    idField.setEditable(false);
-    idField.setStyle(
-        "-fx-font-size: 12;" +
-        "-fx-padding: 8;" +
-        "-fx-background-color: #0a0e13;" +
-        "-fx-text-fill: " + ACCENT_CYAN + ";" +
-        "-fx-border-color: " + ACCENT_CYAN + ";" +
-        "-fx-border-radius: 4;" +
-        "-fx-border-width: 1;" +
-        "-fx-font-family: 'Courier New';" +
-        "-fx-opacity: 0.8;"
-    );
+        Label idLabel = createLabel("Citizen ID (Auto-Generated):");
+        TextField idField = createTextField("");
+        idField.setEditable(false);
+        idField.setStyle(
+            "-fx-font-size: 12;" +
+            "-fx-padding: 8;" +
+            "-fx-background-color: #0a0e13;" +
+            "-fx-text-fill: " + ACCENT_CYAN + ";" +
+            "-fx-border-color: " + ACCENT_CYAN + ";" +
+            "-fx-border-radius: 4;" +
+            "-fx-border-width: 1;" +
+            "-fx-font-family: 'Courier New';" +
+            "-fx-opacity: 0.8;"
+        );
 
-    if (idField.getText().isEmpty()) {
-        idField.setText(CitizenIdGenerator.generateCitizenId(citizenMap));
+        if (idField.getText().isEmpty()) {
+            idField.setText(CitizenIdGenerator.generateCitizenId(citizenMap));
+        }
+
+        Button regenerateBtn = createButton("🔄 New ID", PRIMARY_BLUE);
+        regenerateBtn.setPrefWidth(120);
+        regenerateBtn.setOnAction(e -> idField.setText(CitizenIdGenerator.generateCitizenId(citizenMap)));
+
+        HBox idBox = new HBox(10, idField, regenerateBtn);
+        HBox.setHgrow(idField, Priority.ALWAYS);
+
+        TextField nameField = createTextField("Name...");
+        TextField emailField = createTextField("Email...");
+        TextField numberField = createTextField("Phone Number...");
+        TextField passwordField = createTextField("Password...");
+
+        VBox.setVgrow(nameField, Priority.NEVER);
+        VBox.setVgrow(emailField, Priority.NEVER);
+        VBox.setVgrow(numberField, Priority.NEVER);
+        VBox.setVgrow(passwordField, Priority.NEVER);
+
+        Button addBtn = createButton("✅ Add Citizen", ACCENT_CYAN);
+        addBtn.setOnAction(e -> {
+            String id = idField.getText().trim();
+            String name = nameField.getText().trim();
+            String email = emailField.getText().trim();
+            String number = numberField.getText().trim();
+            String password = passwordField.getText().trim();
+
+            if (name.isEmpty() || email.isEmpty() || number.isEmpty() || password.isEmpty()) {
+                showError.accept("Please fill in all fields.");
+                return;
+            }
+
+            if (!Validator.isValidCitizenName(name)) {
+                showError.accept("Invalid name format.");
+                return;
+            }
+            if (!Validator.isValidEmail(email)) {
+                showError.accept("Invalid email format.");
+                return;
+            }
+            if (!Validator.isValidCitizenNumber(number)) {
+                showError.accept("Invalid phone number format.");
+                return;
+            }
+
+            for (Citizen c : citizenMap.values()) {
+                if (c.getEmail().equalsIgnoreCase(email)) {
+                    showError.accept("Email already in use.");
+                    return;
+                }
+                if (c.getNumber().equals(number)) {
+                    showError.accept("Phone number already in use.");
+                    return;
+                }
+            }
+
+            Citizen newCitizen = new Citizen(id, name, number, email, password);
+            LocalDatabase db = new LocalDatabase();
+            db.addCitizen(newCitizen);
+            citizenMap.put(id, newCitizen);
+
+            showSuccess.accept("Citizen added successfully: " + name);
+            adminCitizensStatusArea.appendText("✅ Added citizen: " + newCitizen.getName() + " (ID: " + id + ")\n");
+
+            idField.setText(CitizenIdGenerator.generateCitizenId(citizenMap));
+            nameField.clear();
+            emailField.clear();
+            numberField.clear();
+            passwordField.clear();
+        });
+
+        addSection.getChildren().addAll(
+            addTitle,
+            statusLabel,
+            idLabel,
+            idBox,
+            createLabel("Name:"),
+            nameField,
+            createLabel("Email:"),
+            emailField,
+            createLabel("Phone Number:"),
+            numberField,
+            createLabel("Password:"),
+            passwordField,
+            addBtn
+        );
+
+        return addSection;
     }
-
-    Button regenerateBtn = createButton("🔄 New ID", PRIMARY_BLUE);
-    regenerateBtn.setPrefWidth(120);
-    regenerateBtn.setOnAction(e -> idField.setText(CitizenIdGenerator.generateCitizenId(citizenMap)));
-
-    HBox idBox = new HBox(10, idField, regenerateBtn);
-    HBox.setHgrow(idField, Priority.ALWAYS);
-
-    TextField nameField = createTextField("Name...");
-    TextField emailField = createTextField("Email...");
-    TextField numberField = createTextField("Phone Number...");
-    TextField passwordField = createTextField("Password...");
-
-    VBox.setVgrow(nameField, Priority.NEVER);
-    VBox.setVgrow(emailField, Priority.NEVER);
-    VBox.setVgrow(numberField, Priority.NEVER);
-    VBox.setVgrow(passwordField, Priority.NEVER);
-
-    Button addBtn = createButton("✅ Add Citizen", ACCENT_CYAN);
-    addBtn.setOnAction(e -> {
-        String id = idField.getText().trim();
-        String name = nameField.getText().trim();
-        String email = emailField.getText().trim();
-        String number = numberField.getText().trim();
-        String password = passwordField.getText().trim();
-
-        // EMPTY CHECK
-        if (name.isEmpty() || email.isEmpty() || number.isEmpty() || password.isEmpty()) {
-            showError.accept("Please fill in all fields.");
-            return;
-        }
-
-        // VALIDATION
-        if (!Validator.isValidCitizenName(name)) {
-            showError.accept("Invalid name format.");
-            return;
-        }
-        if (!Validator.isValidEmail(email)) {
-            showError.accept("Invalid email format.");
-            return;
-        }
-        if (!Validator.isValidCitizenNumber(number)) {
-            showError.accept("Invalid phone number format.");
-            return;
-        }
-
-        // CHECK DUPLICATES
-        for (Citizen c : citizenMap.values()) {
-            if (c.getEmail().equalsIgnoreCase(email)) {
-                showError.accept("Email already in use.");
-                return;
-            }
-            if (c.getNumber().equals(number)) {
-                showError.accept("Phone number already in use.");
-                return;
-            }
-        }
-
-        // ADD CITIZEN
-        Citizen newCitizen = new Citizen(id, name, number, email, password);
-        LocalDatabase db = new LocalDatabase();
-        db.addCitizen(newCitizen);
-        citizenMap.put(id, newCitizen);
-
-        showSuccess.accept("Citizen added successfully: " + name);
-        adminCitizensStatusArea.appendText("✅ Added citizen: " + newCitizen.getName() + " (ID: " + id + ")\n");
-
-        idField.setText(CitizenIdGenerator.generateCitizenId(citizenMap));
-        nameField.clear();
-        emailField.clear();
-        numberField.clear();
-        passwordField.clear();
-    });
-
-    addSection.getChildren().addAll(
-        addTitle,
-        statusLabel,
-        idLabel,
-        idBox,
-        createLabel("Name:"),
-        nameField,
-        createLabel("Email:"),
-        emailField,
-        createLabel("Phone Number:"),
-        numberField,
-        createLabel("Password:"),
-        passwordField,
-        addBtn
-    );
-
-    return addSection;
-}
 
 
 
@@ -1789,7 +1769,6 @@ public class MainController {
 
         adminCitizensStatusArea.setText(sb.toString());
 
-        // Auto-scroll to bottom
         Platform.runLater(() -> adminCitizensStatusArea.setScrollTop(Double.MAX_VALUE));
     }
 
@@ -2435,7 +2414,7 @@ public class MainController {
     private void showTemporaryMessage(String message, TextArea statusArea, String color) {
         if (statusArea == null) return;
 
-        String originalStyle = statusArea.getStyle(); // save current style
+        String originalStyle = statusArea.getStyle();
 
         statusArea.setStyle(
             "-fx-font-size: 11;" +
@@ -2450,7 +2429,6 @@ public class MainController {
         );
         statusArea.setText(message);
 
-        // revert after 3 seconds
         PauseTransition pause = new PauseTransition(Duration.seconds(3));
         pause.setOnFinished(e -> statusArea.setStyle(originalStyle));
         pause.play();
